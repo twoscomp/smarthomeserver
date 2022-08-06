@@ -1,6 +1,6 @@
 version: "3"
 
-# a couple of services that are generaly useful, remember to set up your .env file first 
+# a couple of services that are generaly useful, remember to set up your .env file first
 services:
   heimdall:
     image: linuxserver/heimdall
@@ -53,8 +53,8 @@ services:
       - "3300:3000/tcp"
       - "3380:80/tcp"
     volumes:
-       - '${DATADIR}/adguard/workdir:/opt/adguardhome/work'
-       - '${DATADIR}/adguard/confdir:/opt/adguardhome/conf'
+      - "${DATADIR}/adguard/workdir:/opt/adguardhome/work"
+      - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
     cap_add:
       - NET_ADMIN
     logging:
@@ -80,33 +80,33 @@ services:
   #    - ${DATADIR}/unifi/run2:/run/unifi
   #    - ${DATADIR}/unifi/work:/usr/lib/unifi/work
 
-  unifi-controller:
-    image: ghcr.io/linuxserver/unifi-controller:arm32v7-latest
-    container_name: unifi-controller
-    restart: unless-stopped
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - MEM_LIMIT=512M #optional
-    volumes:
-      - ${DATADIR}/unifi-controller:/config
-    ports:
-      - 3478:3478/udp
-      - 10001:10001/udp
-      - 8080:8080
-      - 8443:8443
-      - 1900:1900/udp
-      - 8843:8843
-      - 8880:8880
-      - 6789:6789
-      - 5514:5514
-    labels: # better keep this one up to date manually
-      - "com.centurylinklabs.watchtower.enable=false"
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/loki/api/v1/push"
-        max-size: "200m"
+  # unifi-controller:
+  #   image: ghcr.io/linuxserver/unifi-controller:arm32v7-latest
+  #   container_name: unifi-controller
+  #   restart: unless-stopped
+  #   environment:
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
+  #     - MEM_LIMIT=512M #optional
+  #   volumes:
+  #     - ${DATADIR}/unifi-controller:/config
+  #   ports:
+  #     - 3478:3478/udp
+  #     - 10001:10001/udp
+  #     - 8080:8080
+  #     - 8443:8443
+  #     - 1900:1900/udp
+  #     - 8843:8843
+  #     - 8880:8880
+  #     - 6789:6789
+  #     - 5514:5514
+  #   labels: # better keep this one up to date manually
+  #     - "com.centurylinklabs.watchtower.enable=false"
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: "http://localhost:3100/loki/api/v1/push"
+  #       max-size: "200m"
 
   watchtower:
     image: containrrr/watchtower
@@ -116,13 +116,13 @@ services:
       - TZ=${TZ}
       - WATCHTOWER_CLEANUP=true # deleting old unused images automatically
       # optional for notifications
-      #- WATCHTOWER_NOTIFICATIONS=email
-      #- WATCHTOWER_NOTIFICATION_EMAIL_FROM=${EMAIL_FROM}
-      #- WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_EMAIL_TO}
-      #- WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${SMTP_SERVER}
-      #- WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${SMTP_PORT}
-      #- WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${SMTP_USER}
-      #- WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${SMTP_PASSWORD}
+      - WATCHTOWER_NOTIFICATIONS=email
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${EMAIL_FROM}
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_EMAIL_TO}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${SMTP_SERVER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${SMTP_PORT}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${SMTP_USER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${SMTP_PASSWORD}
       # alternative for notification via pushover
       #- WATCHTOWER_NOTIFICATIONS=shoutrrr
       #- WATCHTOWER_NOTIFICATION_URL=pushover://shoutrrr:${PO_TOKEN}@${PO_USERKEY}
