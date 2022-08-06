@@ -102,8 +102,8 @@ services:
     depends_on:
       influxdb:
         condition: service_healthy
-      mosquitto:
-        condition: service_started
+    #   mosquitto:
+    #     condition: service_started
     ports:
       - 8123:8123
     environment:
