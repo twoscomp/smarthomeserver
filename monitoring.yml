@@ -1,13 +1,19 @@
 version: "3"
 
+networks:
+  default:
+    external:
+      name: smarthomeserver
+
 services:
   prometheus:
     image: prom/prometheus:v2.37.0
     container_name: prometheus
     restart: unless-stopped
     user: ${PUID}:${PGID}
-    ports:
-      - "9090:9090"
+    #user: "0:0"
+    #ports:
+    #  - "9090:9090"
     volumes:
       - ${DATADIR}/prometheus/etc:/etc/prometheus
       - ${DATADIR}/prometheus/data:/prometheus
@@ -57,3 +63,20 @@ services:
       options:
         loki-url: "http://localhost:3100/loki/api/v1/push"
         max-size: "10m"
+
+  adguard_exporter:
+    image: ebrianne/adguard-exporter:latest
+    container_name: adguard-exporter
+    restart: unless-stopped
+    # ports:
+    #  - "9617:9617"
+    environment:
+      - adguard_protocol=http
+      - adguard_hostname=adguard
+      - adguard_username=twoscomp
+      - adguard_password=${AD_GUARD_PASSWORD}
+      - adguard_port=80
+      - server_port=9617
+      - interval=30s
+      - log_limit=10000
+      - password_from_file=false
