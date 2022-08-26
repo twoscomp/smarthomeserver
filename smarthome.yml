@@ -1,5 +1,10 @@
 version: "3"
 
+networks:
+  default:
+    external:
+      name: smarthomeserver
+
 # a couple of services for your smarthome, remember to set up your .env file first
 services:
   # mosquitto:
@@ -14,15 +19,18 @@ services:
 
   grafana:
     image: "grafana/grafana:latest"
+    container_name: "grafana"
     restart: unless-stopped
-    user: "$PUID:$PGID"
+    # user: "$PUID:$PGID"
+    user: "0"
     depends_on:
       influxdb:
         condition: service_healthy
     volumes:
       - "${DATADIR}/grafana/data:/var/lib/grafana"
-    ports:
-      - 3000:3000
+      - "${DATADIR}/grafana/provisioning:/etc/grafana/provisioning"
+    #ports:
+    #  - 3000:3000
     # uncomment this if you wanta to allow anonymus acces to Grafana for embedding (e.g. in Home Assistant dashboards)
     #environment:
     #  - GF_AUTH_DISABLE_LOGIN_FORM=true
@@ -32,16 +40,17 @@ services:
 
   influxdb:
     image: "influxdb:1.8"
+    container_name: "influxdb"
     restart: unless-stopped
     volumes:
       - "${DATADIR}/influxdb/data:/var/lib/influxdb"
     healthcheck:
-      test: ["CMD", "curl", "-sI", "http://127.0.0.1:8086/ping"]
+      test: ["CMD", "curl", "-sI", "http://influxdb:8086/ping"]
       interval: 30s
       timeout: 1s
       retries: 24
-    ports:
-      - 127.0.0.1:8086:8086
+  #  ports:
+  #    - 127.0.0.1:8086:8086
 
   # tasmoadmin:
   #   image: "raymondmm/tasmoadmin"
