@@ -7,16 +7,16 @@ networks:
 
 # a couple of services that are generaly useful, remember to set up your .env file first
 services:
-  heimdall:
-    image: linuxserver/heimdall
-    container_name: heimdall
-    restart: unless-stopped
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-    volumes:
-      - ${DATADIR}/heimdall:/config
+#  heimdall:
+#    image: linuxserver/heimdall
+#    container_name: heimdall
+#    restart: unless-stopped
+#    environment:
+#      - PUID=${PUID}
+#      - PGID=${PGID}
+#      - TZ=${TZ}
+#    volumes:
+#      - ${DATADIR}/heimdall:/config
     #ports:
     #  - 9080:80
     #  - 9443:443
