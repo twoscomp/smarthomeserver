@@ -1,0 +1,19 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: smarthomeserver
+
+services:
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - ${DATADIR}/readarr:/config
+      - /mnt/qnap-download:/data
+    restart: unless-stopped
