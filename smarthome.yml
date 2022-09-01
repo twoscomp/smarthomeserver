@@ -23,32 +23,32 @@ services:
     restart: unless-stopped
     # user: "$PUID:$PGID"
     user: "0"
-    depends_on:
-      influxdb:
-        condition: service_healthy
+    # depends_on:
+    #   influxdb:
+    #     condition: service_healthy
     volumes:
       - "${DATADIR}/grafana/data:/var/lib/grafana"
       - "${DATADIR}/grafana/provisioning:/etc/grafana/provisioning"
     #ports:
     #  - 3000:3000
     # uncomment this if you wanta to allow anonymus acces to Grafana for embedding (e.g. in Home Assistant dashboards)
-    #environment:
+    environment:
     #  - GF_AUTH_DISABLE_LOGIN_FORM=true
-    #  - GF_AUTH_ANONYMOUS_ENABLED=true
-    #  - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-    #  - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SECURITY_ALLOW_EMBEDDING=true
 
-  influxdb:
-    image: "influxdb:1.8"
-    container_name: "influxdb"
-    restart: unless-stopped
-    volumes:
-      - "${DATADIR}/influxdb/data:/var/lib/influxdb"
-    healthcheck:
-      test: ["CMD", "curl", "-sI", "http://influxdb:8086/ping"]
-      interval: 30s
-      timeout: 1s
-      retries: 24
+#  influxdb:
+#    image: "influxdb:1.8"
+#    container_name: "influxdb"
+#    restart: unless-stopped
+#    volumes:
+#      - "${DATADIR}/influxdb/data:/var/lib/influxdb"
+#    healthcheck:
+#      test: ["CMD", "curl", "-sI", "http://influxdb:8086/ping"]
+#      interval: 30s
+#      timeout: 1s
+#      retries: 24
   #  ports:
   #    - 127.0.0.1:8086:8086
 
@@ -108,9 +108,9 @@ services:
     # alternative needed for auto discovery, bluetooth,...
     #network_mode: host
     #privileged: true
-    depends_on:
-      influxdb:
-        condition: service_healthy
+    # depends_on:
+    #  influxdb:
+    #    condition: service_healthy
     #   mosquitto:
     #     condition: service_started
     ports:
