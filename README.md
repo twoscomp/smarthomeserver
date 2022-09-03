@@ -82,3 +82,9 @@ Loki creates a json file for each services log that is kepts until a restart. Wi
 
 ## How does it look like? I need more details
 You can find more images and a details in my [blog post](https://thesmarthomejourney.com/2021/01/09/custom-smart-home-server-hub/)
+
+## Notes
+
+`docker stack deploy -c <(docker-compose config) stack-name-here`s
+
+Adguard runs on a macvlan network created and managed externally (CLI/Portainer). This enables the AdGuard container to look like a physical device on the network bount to 192.168.0.254. Additionally this enables proper client IPs to be shown in the webui while running in Docker Swarm.
