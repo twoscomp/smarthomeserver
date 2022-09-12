@@ -73,12 +73,12 @@ services:
     container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATADIR}/watchtower/config:/config
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
       - WATCHTOWER_CLEANUP=true # deleting old unused images automatically
-      # optional for notifications
       - WATCHTOWER_NOTIFICATIONS=email
       - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${EMAIL_FROM}
       - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_EMAIL_TO}
@@ -86,9 +86,7 @@ services:
       - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${SMTP_PORT}
       - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${SMTP_USER}
       - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${SMTP_PASSWORD}
-      # alternative for notification via pushover
-      #- WATCHTOWER_NOTIFICATIONS=shoutrrr
-      #- WATCHTOWER_NOTIFICATION_URL=pushover://shoutrrr:${PO_TOKEN}@${PO_USERKEY}
+      - DOCKER_CONFIG=/config
 
   loki:
     <<: *logging
@@ -103,10 +101,13 @@ services:
 
   duplicati:
     <<: *logging
-    <<: *env
     image: lscr.io/linuxserver/duplicati:latest
     container_name: duplicati
     restart: unless-stopped
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
     volumes:
       - ${DATADIR}/duplicati/config:/config
       - ${DATADIR}:/source
@@ -158,20 +159,133 @@ services:
       # don't automatically update this container as it might break your setup
       - "com.centurylinklabs.watchtower.enable=false"
 
-#  readarr:
-#    <<: *logging
-#    <<: *env
-#    image: lscr.io/linuxserver/readarr:develop
-#    container_name: readarr
-#    environment:
-#      - PUID=0
-#      - PGID=0
-#      - TZ=${TZ}
-#    volumes:
-#      - ${DATADIR}/readarr:/config
-#      - /mnt/qnap-download:/data
-#    restart: unless-stopped
+  nzbget:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    volumes:
+      - ${DATADIR}/nzbget/config:/config
+      - /nfs/qnap/multimedia/usenet:/data/usenet
+    restart: unless-stopped
 
+  transmission:
+    <<: *logging
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - TRANSMISSION_WEB_HOME=/flood-for-transmission/ #optional
+      - USER=admin #optional
+      - PASS=ZXzpmZ!QTt*A6YRk #optional
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
+    volumes:
+      - ${DATADIR}/flood-for-transmission:/flood-for-transmission
+      - ${DATADIR}/transmission/config:/config
+      - /nfs/qnap/multimedia/torrent:/data/torrent
+      - /nfs/qnap/multimedia/torrent/watch:/watch
+    restart: unless-stopped
+
+  radarr:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    volumes:
+      - ${DATADIR}/radarr/config:/config
+      - /nfs/qnap/multimedia:/data 
+    restart: unless-stopped
+
+  radarr:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    volumes:
+      - ${DATADIR}/radarr/config:/config
+      - /nfs/qnap/multimedia:/data 
+    restart: unless-stopped
+
+  prowlarr:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    volumes:
+      - ${DATADIR}/prowlarr/config:/config
+    restart: unless-stopped
+
+  sonarr:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    volumes:
+      - ${DATADIR}/sonarr/config:/config
+      - /nfs/qnap/multimedia:/data 
+    restart: unless-stopped
+      
+  readarr:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    volumes:
+      - ${DATADIR}/readarr/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  mylar3:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/mylar3:latest
+    container_name: mylar3
+    volumes:
+      - ${DATADIR}/mylar3/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  calibre:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    volumes:
+      - ${DATADIR}/calibre/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  unpackerr:
+    <<: *logging
+    <<: *env
+    image: golift/unpackerr
+    container_name: unpackerr
+    volumes:
+      - /nfs/qnap/multimedia:/data
+      - ${DATADIR}/unpackerr/config:/etc/unpackerr/
+    restart: unless-stopped
+
+  organizr:
+    <<: *logging
+    <<: *env
+    image: organizr/organizr
+    container_name: organizr
+    volumes:
+      - ${DATADIR}/organizr/config:/config
+  
+  overseerr:
+    <<: *logging
+    <<: *env
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    volumes:
+      - ${DATADIR}/overseerr/config:/config
+    restart: unless-stopped
+      
 #  prometheus:
 #    <<: *logging
 #    image: prom/prometheus:v2.37.0
