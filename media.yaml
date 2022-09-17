@@ -1,0 +1,23 @@
+version: "3.9"
+
+x-env: &env
+  environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+
+networks:
+  default:
+    name: smarthomeserver
+    external: true
+
+services:
+  komga:
+    image: index.docker.io/gotson/komga
+    container_name: komga
+    volumes:
+      - ${DATADIR}/komga/config:/config
+      - /nfs/qnap/multimedia:/data 
+      - /etc/timezone:/etc/timezone
+    user: "${PUID}:${PGID}"
+    restart: unless-stopped

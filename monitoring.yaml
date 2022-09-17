@@ -1,0 +1,90 @@
+version: "3.9"
+
+x-env: &env
+  environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+
+networks:
+  default:
+    name: smarthomeserver
+    external: true
+
+services:
+  grafana:
+    <<: *env
+    image: "grafana/grafana:latest"
+    container_name: "grafana"
+    restart: unless-stopped
+    user: ${PUID}:${PGID}
+    volumes:
+      - "${DATADIR}/grafana/data:/var/lib/grafana"
+      - "${DATADIR}/grafana/provisioning:/etc/grafana/provisioning"
+    # uncomment this if you wanta to allow anonymus acces to Grafana for embedding (e.g. in Home Assistant dashboards)
+    environment:
+    #  - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      
+  prometheus:
+    <<: *env
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    user: ${PUID}:${PGID}
+    volumes:
+      - ${DATADIR}/prometheus/etc:/etc/prometheus
+      - ${DATADIR}/prometheus/data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+
+#  Note: Node Exporter requires access to the host system. The authors do not recommend
+#  running it as a docker container.
+#  node_exporter:
+#    image: prom/node-exporter:latest
+#    container_name: node_exporter
+#    command:
+#      - '--path.rootfs=/host'
+#    pid: host
+#    restart: unless-stopped
+#    volumes:
+#      - '/:/host:ro,rslave'
+#    ports:
+#      - target: 9100
+#        published: 9100
+#        protocol: tcp
+#        mode: host
+#    deploy:
+#      mode: global
+#      labels:
+#        prometheus-job: node-exporter
+
+  cadvisor:
+    <<: *env
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    command:
+      - "-docker_only"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk,ro
+      - /dev/kmsg:/dev/kmsg,ro
+    restart: unless-stopped
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: host
+    deploy:
+      mode: global
+      labels:
+        prometheus-job: cadvisor
+    privileged: true
+
