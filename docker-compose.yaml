@@ -59,26 +59,6 @@ services:
     networks:
       - adguard-mvl-2
 
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${DATADIR}/watchtower/config:/config
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - WATCHTOWER_CLEANUP=true # deleting old unused images automatically
-      - WATCHTOWER_NOTIFICATIONS=email
-      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${EMAIL_FROM}
-      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_EMAIL_TO}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${SMTP_SERVER}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${SMTP_PORT}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${SMTP_USER}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${SMTP_PASSWORD}
-      - DOCKER_CONFIG=/config
-
   duplicati:
     image: lscr.io/linuxserver/duplicati:latest
     container_name: duplicati
