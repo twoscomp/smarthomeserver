@@ -1,11 +1,5 @@
 version: "3.9"
 
-x-logging: &logging
-  logging:
-    driver: loki
-    options:
-      loki-url: "http://localhost:3100/loki/api/v1/push"
-
 x-env: &env
   environment:
     - PUID=${PUID}
@@ -26,7 +20,6 @@ volumes:
 
 services:
   adguard1:
-    <<: *logging
     <<: *env
     container_name: adguard
     image: adguard/adguardhome:latest
@@ -47,7 +40,6 @@ services:
       - adguard-mvl-1
 
   adguard2:
-    <<: *logging
     <<: *env
     container_name: adguard
     image: adguard/adguardhome:latest
@@ -68,7 +60,6 @@ services:
       - adguard-mvl-2
 
   watchtower:
-    <<: *logging
     image: containrrr/watchtower
     container_name: watchtower
     volumes:
@@ -88,19 +79,7 @@ services:
       - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${SMTP_PASSWORD}
       - DOCKER_CONFIG=/config
 
-  loki:
-    <<: *logging
-    <<: *env
-    image: grafana/loki:2.6.1
-    restart: unless-stopped
-    ports:
-      - "3100:3100"
-    volumes:
-      - ${DATADIR}/loki/config/loki-config.yaml:/etc/loki/loki-config.yaml
-      - ${DATADIR}/loki/data:/data/loki
-
   duplicati:
-    <<: *logging
     image: lscr.io/linuxserver/duplicati:latest
     container_name: duplicati
     restart: unless-stopped
@@ -113,7 +92,6 @@ services:
       - ${DATADIR}:/source
 
   nginx-proxy-manager:
-    <<: *logging
     <<: *env
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: nginx-proxy-manager
@@ -130,25 +108,7 @@ services:
       interval: 10s
       timeout: 3s
 
-  grafana:
-    <<: *logging
-    image: "grafana/grafana:latest"
-    container_name: "grafana"
-    restart: unless-stopped
-    user: "${PUID}:${PGID}"
-    user: "0"
-    volumes:
-      - "${DATADIR}/grafana/data:/var/lib/grafana"
-      - "${DATADIR}/grafana/provisioning:/etc/grafana/provisioning"
-    # uncomment this if you wanta to allow anonymus acces to Grafana for embedding (e.g. in Home Assistant dashboards)
-    environment:
-    #  - GF_AUTH_DISABLE_LOGIN_FORM=true
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
-      - GF_SECURITY_ALLOW_EMBEDDING=true
-
   homeassistant:
-    <<: *logging
     <<: *env
     container_name: homeassistant
     restart: unless-stopped
@@ -160,7 +120,6 @@ services:
       - "com.centurylinklabs.watchtower.enable=false"
 
   nzbget:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/nzbget:latest
     container_name: nzbget
@@ -170,7 +129,6 @@ services:
     restart: unless-stopped
 
   transmission:
-    <<: *logging
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
     environment:
@@ -191,17 +149,6 @@ services:
     restart: unless-stopped
 
   radarr:
-    <<: *logging
-    <<: *env
-    image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
-    volumes:
-      - ${DATADIR}/radarr/config:/config
-      - /nfs/qnap/multimedia:/data 
-    restart: unless-stopped
-
-  radarr:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
@@ -211,7 +158,6 @@ services:
     restart: unless-stopped
 
   prowlarr:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/prowlarr:develop
     container_name: prowlarr
@@ -220,7 +166,6 @@ services:
     restart: unless-stopped
 
   sonarr:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
@@ -230,7 +175,6 @@ services:
     restart: unless-stopped
       
   readarr:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/readarr:develop
     container_name: readarr
@@ -240,7 +184,6 @@ services:
     restart: unless-stopped
 
   mylar3:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/mylar3:latest
     container_name: mylar3
@@ -250,7 +193,6 @@ services:
     restart: unless-stopped
 
   calibre:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/calibre:latest
     container_name: calibre
@@ -260,7 +202,6 @@ services:
     restart: unless-stopped
 
   unpackerr:
-    <<: *logging
     <<: *env
     image: golift/unpackerr
     container_name: unpackerr
@@ -270,7 +211,6 @@ services:
     restart: unless-stopped
 
   organizr:
-    <<: *logging
     <<: *env
     image: organizr/organizr
     container_name: organizr
@@ -278,7 +218,6 @@ services:
       - ${DATADIR}/organizr/config:/config
   
   overseerr:
-    <<: *logging
     <<: *env
     image: lscr.io/linuxserver/overseerr:latest
     container_name: overseerr
@@ -287,7 +226,6 @@ services:
     restart: unless-stopped
       
 #  prometheus:
-#    <<: *logging
 #    image: prom/prometheus:v2.37.0
 #    container_name: prometheus
 #    restart: unless-stopped
@@ -299,7 +237,6 @@ services:
 #      - "--config.file=/etc/prometheus/prometheus.yaml"
 
 #  node_exporter:
-#    <<: *logging
 #    image: prom/node-exporter
 #    container_name: node_exporter
 #    command:
@@ -312,7 +249,6 @@ services:
 #      mode: global
 #
 #  cadvisor:
-#    <<: *logging
 #    image: google/cadvisor:latest
 #    container_name: cadvisor
 #    command:
