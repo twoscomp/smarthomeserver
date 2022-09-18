@@ -12,12 +12,111 @@ networks:
     external: true
 
 services:
+  overseerr:
+    <<: *env
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    volumes:
+      - ${DATADIR}/overseerr/config:/config
+    restart: unless-stopped
+
   komga:
     image: index.docker.io/gotson/komga
     container_name: komga
     volumes:
       - ${DATADIR}/komga/config:/config
-      - /nfs/qnap/multimedia:/data 
+      - /nfs/qnap/multimedia:/data
       - /etc/timezone:/etc/timezone
     user: "${PUID}:${PGID}"
+    restart: unless-stopped
+
+  nzbget:
+    <<: *env
+    image: lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    volumes:
+      - ${DATADIR}/nzbget/config:/config
+      - /nfs/qnap/multimedia/usenet:/data/usenet
+    restart: unless-stopped
+
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - TRANSMISSION_WEB_HOME=/flood-for-transmission/ #optional
+      - USER=admin #optional
+      - PASS=ZXzpmZ!QTt*A6YRk #optional
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
+    volumes:
+      - ${DATADIR}/flood-for-transmission:/flood-for-transmission
+      - ${DATADIR}/transmission/config:/config
+      - /nfs/qnap/multimedia/torrent:/data/torrent
+      - /nfs/qnap/multimedia/torrent/watch:/watch
+    restart: unless-stopped
+
+  radarr:
+    <<: *env
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    volumes:
+      - ${DATADIR}/radarr/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  prowlarr:
+    <<: *env
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    volumes:
+      - ${DATADIR}/prowlarr/config:/config
+    restart: unless-stopped
+
+  sonarr:
+    <<: *env
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    volumes:
+      - ${DATADIR}/sonarr/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  readarr:
+    <<: *env
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    volumes:
+      - ${DATADIR}/readarr/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  mylar3:
+    <<: *env
+    image: lscr.io/linuxserver/mylar3:latest
+    container_name: mylar3
+    volumes:
+      - ${DATADIR}/mylar3/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  calibre:
+    <<: *env
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    volumes:
+      - ${DATADIR}/calibre/config:/config
+      - /nfs/qnap/multimedia:/data
+    restart: unless-stopped
+
+  unpackerr:
+    <<: *env
+    image: golift/unpackerr
+    container_name: unpackerr
+    volumes:
+      - /nfs/qnap/multimedia:/data
+      - ${DATADIR}/unpackerr/config:/etc/unpackerr/
     restart: unless-stopped

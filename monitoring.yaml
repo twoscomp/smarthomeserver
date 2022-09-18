@@ -11,6 +11,10 @@ networks:
     name: smarthomeserver
     external: true
 
+secrets:
+  shepherd_registry_password:
+    external: true
+
 services:
   grafana:
     <<: *env
@@ -87,4 +91,23 @@ services:
       labels:
         prometheus-job: cadvisor
     privileged: true
+
+  shepherd:
+    build: .
+    image: mazzolino/shepherd
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ}
+      - SLEEP_TIME=2h
+      - IGNORELIST_SERVICES=smarthomeserver_homeassistant
+      - ROLLBACK_ON_FAILURE=true
+      - IMAGE_AUTOCLEAN_LIMIT=5
+      - REGISTRY_USER=twoscomplement
+    secrets:
+      - shepherd_registry_password
+    deploy:
+      placement:
+        constraints:
+        - node.role == manager
 
