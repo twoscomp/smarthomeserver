@@ -38,6 +38,10 @@ services:
       - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
     networks:
       - adguard-mvl-1
+    deploy:
+      placement:
+        constraints:
+          - node.labels.adguard == true
 
   adguard2:
     <<: *env
@@ -58,6 +62,10 @@ services:
       - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
     networks:
       - adguard-mvl-2
+    deploy:
+      placement:
+        constraints:
+          - node.labels.adguard == true
 
   duplicati:
     image: lscr.io/linuxserver/duplicati:latest
@@ -99,152 +107,9 @@ services:
       # don't automatically update this container as it might break your setup
       - "com.centurylinklabs.watchtower.enable=false"
 
-  nzbget:
-    <<: *env
-    image: lscr.io/linuxserver/nzbget:latest
-    container_name: nzbget
-    volumes:
-      - ${DATADIR}/nzbget/config:/config
-      - /nfs/qnap/multimedia/usenet:/data/usenet
-    restart: unless-stopped
-
-  transmission:
-    image: lscr.io/linuxserver/transmission:latest
-    container_name: transmission
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - TRANSMISSION_WEB_HOME=/flood-for-transmission/ #optional
-      - USER=admin #optional
-      - PASS=ZXzpmZ!QTt*A6YRk #optional
-    ports:
-      - 51413:51413
-      - 51413:51413/udp
-    volumes:
-      - ${DATADIR}/flood-for-transmission:/flood-for-transmission
-      - ${DATADIR}/transmission/config:/config
-      - /nfs/qnap/multimedia/torrent:/data/torrent
-      - /nfs/qnap/multimedia/torrent/watch:/watch
-    restart: unless-stopped
-
-  radarr:
-    <<: *env
-    image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
-    volumes:
-      - ${DATADIR}/radarr/config:/config
-      - /nfs/qnap/multimedia:/data 
-    restart: unless-stopped
-
-  prowlarr:
-    <<: *env
-    image: lscr.io/linuxserver/prowlarr:develop
-    container_name: prowlarr
-    volumes:
-      - ${DATADIR}/prowlarr/config:/config
-    restart: unless-stopped
-
-  sonarr:
-    <<: *env
-    image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
-    volumes:
-      - ${DATADIR}/sonarr/config:/config
-      - /nfs/qnap/multimedia:/data 
-    restart: unless-stopped
-      
-  readarr:
-    <<: *env
-    image: lscr.io/linuxserver/readarr:develop
-    container_name: readarr
-    volumes:
-      - ${DATADIR}/readarr/config:/config
-      - /nfs/qnap/multimedia:/data
-    restart: unless-stopped
-
-  mylar3:
-    <<: *env
-    image: lscr.io/linuxserver/mylar3:latest
-    container_name: mylar3
-    volumes:
-      - ${DATADIR}/mylar3/config:/config
-      - /nfs/qnap/multimedia:/data
-    restart: unless-stopped
-
-  calibre:
-    <<: *env
-    image: lscr.io/linuxserver/calibre:latest
-    container_name: calibre
-    volumes:
-      - ${DATADIR}/calibre/config:/config
-      - /nfs/qnap/multimedia:/data
-    restart: unless-stopped
-
-  unpackerr:
-    <<: *env
-    image: golift/unpackerr
-    container_name: unpackerr
-    volumes:
-      - /nfs/qnap/multimedia:/data
-      - ${DATADIR}/unpackerr/config:/etc/unpackerr/
-    restart: unless-stopped
-
   organizr:
     <<: *env
     image: organizr/organizr
     container_name: organizr
     volumes:
       - ${DATADIR}/organizr/config:/config
-  
-  overseerr:
-    <<: *env
-    image: lscr.io/linuxserver/overseerr:latest
-    container_name: overseerr
-    volumes:
-      - ${DATADIR}/overseerr/config:/config
-    restart: unless-stopped
-      
-#  prometheus:
-#    image: prom/prometheus:v2.37.0
-#    container_name: prometheus
-#    restart: unless-stopped
-#    user: ${PUID}:${PGID}
-#    volumes:
-#      - ${DATADIR}/prometheus/etc:/etc/prometheus
-#      - ${DATADIR}/prometheus/data:/prometheus
-#    command:
-#      - "--config.file=/etc/prometheus/prometheus.yaml"
-
-#  node_exporter:
-#    image: prom/node-exporter
-#    container_name: node_exporter
-#    command:
-#      - '--path.rootfs=/host'
-#    pid: host
-#    restart: unless-stopped
-#    volumes:
-#      - '/:/host:ro,rslave'
-#    deploy:
-#      mode: global
-#
-#  cadvisor:
-#    image: google/cadvisor:latest
-#    container_name: cadvisor
-#    command:
-#      - "--docker_only=true"
-#      - "--housekeeping_interval=30s"
-#      - "--disable_metrics=accelerator,cpu_topology,disk,memory_numa,tcp,udp,percpu,sched,process,hugetlb,referenced_memory,resctrl,cpuset,advtcp,memory_numa"
-#    volumes:
-#      - /:/rootfs:ro
-#      - /var/run:/var/run:ro
-#      - /sys:/sys:ro
-#      - /var/lib/docker/:/var/lib/docker:ro
-#      - /dev/disk/:/dev/disk:ro
-#      - /etc/machine-id:/etc/machine-id:ro
-#    devices:
-#      - /dev/kmsg
-#    restart: unless-stopped
-#    deploy:
-#      mode: global
-
