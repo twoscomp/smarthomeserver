@@ -11,6 +11,14 @@ networks:
     name: smarthomeserver
     external: true
 
+volumes:
+  nas-media:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=192.168.0.156"
+      device: :/share/Multimedia
+
 services:
   overseerr:
     <<: *env
@@ -25,8 +33,10 @@ services:
     container_name: komga
     volumes:
       - ${DATADIR}/komga/config:/config
-      - /nfs/qnap/multimedia:/data
       - /etc/timezone:/etc/timezone
+      - type: volume
+        source: nas-media
+        target: /data
     user: "${PUID}:${PGID}"
     restart: unless-stopped
 
@@ -36,7 +46,9 @@ services:
     container_name: nzbget
     volumes:
       - ${DATADIR}/nzbget/config:/config
-      - /nfs/qnap/multimedia/usenet:/data/usenet
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   transmission:
@@ -55,8 +67,9 @@ services:
     volumes:
       - ${DATADIR}/flood-for-transmission:/flood-for-transmission
       - ${DATADIR}/transmission/config:/config
-      - /nfs/qnap/multimedia/torrent:/data/torrent
-      - /nfs/qnap/multimedia/torrent/watch:/watch
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   radarr:
@@ -65,7 +78,9 @@ services:
     container_name: radarr
     volumes:
       - ${DATADIR}/radarr/config:/config
-      - /nfs/qnap/multimedia:/data
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   prowlarr:
@@ -82,7 +97,9 @@ services:
     container_name: sonarr
     volumes:
       - ${DATADIR}/sonarr/config:/config
-      - /nfs/qnap/multimedia:/data
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   readarr:
@@ -91,7 +108,9 @@ services:
     container_name: readarr
     volumes:
       - ${DATADIR}/readarr/config:/config
-      - /nfs/qnap/multimedia:/data
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   mylar3:
@@ -100,7 +119,9 @@ services:
     container_name: mylar3
     volumes:
       - ${DATADIR}/mylar3/config:/config
-      - /nfs/qnap/multimedia:/data
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   calibre:
@@ -109,7 +130,9 @@ services:
     container_name: calibre
     volumes:
       - ${DATADIR}/calibre/config:/config
-      - /nfs/qnap/multimedia:/data
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
 
   unpackerr:
@@ -117,6 +140,8 @@ services:
     image: golift/unpackerr
     container_name: unpackerr
     volumes:
-      - /nfs/qnap/multimedia:/data
       - ${DATADIR}/unpackerr/config:/etc/unpackerr/
+      - type: volume
+        source: nas-media
+        target: /data
     restart: unless-stopped
