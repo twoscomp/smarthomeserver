@@ -18,6 +18,12 @@ volumes:
       type: nfs
       o: "addr=192.168.0.156"
       device: :/share/Multimedia
+  calibre-media:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=192.168.0.156,nolock" # nolock is required for calibre to load. Hopefully this is no longer necessary once migrated to NFSv4 server.
+      device: :/share/Multimedia
 
 services:
   overseerr:
@@ -131,7 +137,7 @@ services:
     volumes:
       - ${DATADIR}/calibre/config:/config
       - type: volume
-        source: nas-media
+        source: calibre-media
         target: /data
     restart: unless-stopped
 
