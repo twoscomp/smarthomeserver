@@ -30,7 +30,6 @@ services:
       placement:
         constraints: 
           - node.role == manager
-          - node.hostname == nuc8-1
 
 networks:
   agent_network:
