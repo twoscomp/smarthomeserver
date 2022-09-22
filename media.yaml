@@ -12,18 +12,12 @@ networks:
     external: true
 
 volumes:
-  nas-media:
+  truenas-media:
     driver: local
     driver_opts:
-      type: nfs
-      o: "addr=192.168.0.156"
-      device: :/share/Multimedia
-  calibre-media:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: "addr=192.168.0.156,nolock" # nolock is required for calibre to load. Hopefully this is no longer necessary once migrated to NFSv4 server.
-      device: :/share/Multimedia
+      type: nfs4
+      o: "addr=192.168.0.196"
+      device: :/mnt/newton/media
 
 services:
   overseerr:
@@ -41,7 +35,7 @@ services:
       - ${DATADIR}/komga/config:/config
       - /etc/timezone:/etc/timezone
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     user: "${PUID}:${PGID}"
     restart: unless-stopped
@@ -53,7 +47,7 @@ services:
     volumes:
       - ${DATADIR}/nzbget/config:/config
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -68,13 +62,13 @@ services:
       - USER=admin #optional
       - PASS=ZXzpmZ!QTt*A6YRk #optional
     ports:
-      - 51413:51413
+      - 51413:51413/tcp
       - 51413:51413/udp
     volumes:
       - ${DATADIR}/flood-for-transmission:/flood-for-transmission
       - ${DATADIR}/transmission/config:/config
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -85,7 +79,7 @@ services:
     volumes:
       - ${DATADIR}/radarr/config:/config
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -104,7 +98,7 @@ services:
     volumes:
       - ${DATADIR}/sonarr/config:/config
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -115,7 +109,7 @@ services:
     volumes:
       - ${DATADIR}/readarr/config:/config
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -126,7 +120,7 @@ services:
     volumes:
       - ${DATADIR}/mylar3/config:/config
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -137,7 +131,7 @@ services:
     volumes:
       - ${DATADIR}/calibre/config:/config
       - type: volume
-        source: calibre-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
 
@@ -145,9 +139,10 @@ services:
     <<: *env
     image: golift/unpackerr
     container_name: unpackerr
+    user: ${PUID}:${PGID}
     volumes:
       - ${DATADIR}/unpackerr/config:/etc/unpackerr/
       - type: volume
-        source: nas-media
+        source: truenas-media
         target: /data
     restart: unless-stopped
