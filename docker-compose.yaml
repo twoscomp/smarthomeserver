@@ -13,10 +13,13 @@ networks:
     external: true
   adguard-mvl-2:
     external: true
+  adguard-mvl-3:
+    external: true
 
 volumes:
   adguard1:
   adguard2:
+  adguard3:
 
 services:
   adguard1:
@@ -67,6 +70,30 @@ services:
         constraints:
           - node.labels.adguard == true
 
+  adguard3:
+    <<: *env
+    container_name: adguard
+    image: adguard/adguardhome:latest
+    restart: unless-stopped
+    # ports:
+    #  - "53:53/tcp"
+    #  - "53:53/udp"
+    #  - "67:67/udp"
+    #  - "443:443/tcp"
+    #  - "853:853/tcp"
+    #  - "784:784/udp"
+    #  - "3300:3000/tcp"
+    #  - "3380:80/tcp"
+    volumes:
+      - "adguard3:/opt/adguardhome/work"
+      - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
+    networks:
+      - adguard-mvl-3
+    deploy:
+      placement:
+        constraints:
+          - node.labels.adguard == true
+
   duplicati:
     image: lscr.io/linuxserver/duplicati:latest
     container_name: duplicati
@@ -95,6 +122,8 @@ services:
       test: ["CMD", "/bin/check-health"]
       interval: 10s
       timeout: 3s
+    deploy:
+      replicas: 3
 
   homeassistant:
     <<: *env
