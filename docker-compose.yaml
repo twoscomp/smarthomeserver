@@ -95,7 +95,7 @@ services:
           - node.labels.adguard == true
 
   duplicati:
-    image: lscr.io/linuxserver/duplicati:latest
+    image: linuxserver/duplicati:latest
     container_name: duplicati
     restart: unless-stopped
     environment:
@@ -123,13 +123,13 @@ services:
       interval: 10s
       timeout: 3s
     deploy:
-      replicas: 3
+      mode: global
 
   homeassistant:
     <<: *env
     container_name: homeassistant
     restart: unless-stopped
-    image: lscr.io/linuxserver/homeassistant:latest
+    image: linuxserver/homeassistant:latest
     volumes:
       - ${DATADIR}/homeassistant/config:/config
     labels:
