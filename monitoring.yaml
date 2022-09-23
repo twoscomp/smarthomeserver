@@ -44,6 +44,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yaml"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
 
 #  Note: Node Exporter requires access to the host system. The authors do not recommend
 #  running it as a docker container.
