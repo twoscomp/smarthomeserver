@@ -146,3 +146,11 @@ services:
         source: truenas-media
         target: /data
     restart: unless-stopped
+
+  tautulli:
+    <<: *env
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    volumes:
+      - ${DATADIR}/tautulli/config:/config
+    restart: unless-stopped
