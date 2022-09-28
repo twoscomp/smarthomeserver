@@ -165,3 +165,14 @@ services:
     volumes:
       - ${DATADIR}/tautulli/config:/config
     restart: unless-stopped
+
+  bazarr:
+    <<: *env
+    image: linuxserver/bazarr:latest
+    container_name: bazarr
+    volumes:
+      - ${DATADIR}/bazarr/config:/config
+      - type: volume
+        source: truenas-media
+        target: /data
+    restart: unless-stopped
