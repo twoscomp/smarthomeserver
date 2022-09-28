@@ -41,10 +41,6 @@ services:
       - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
     networks:
       - adguard-mvl-1
-    deploy:
-      placement:
-        constraints:
-          - node.labels.adguard == true
 
   adguard2:
     <<: *env
@@ -65,10 +61,6 @@ services:
       - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
     networks:
       - adguard-mvl-2
-    deploy:
-      placement:
-        constraints:
-          - node.labels.adguard == true
 
   adguard3:
     <<: *env
@@ -89,10 +81,6 @@ services:
       - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
     networks:
       - adguard-mvl-3
-    deploy:
-      placement:
-        constraints:
-          - node.labels.adguard == true
 
   duplicati:
     image: linuxserver/duplicati:latest
@@ -105,6 +93,11 @@ services:
     volumes:
       - ${DATADIR}/duplicati/config:/config
       - ${DATADIR}:/source
+      - ${SERVARRDIR}:/servarrData
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == nuc8-1
 
   nginx-proxy-manager:
     <<: *env
