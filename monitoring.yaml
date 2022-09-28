@@ -96,22 +96,39 @@ services:
         prometheus-job: cadvisor
     privileged: true
 
-#  shepherd:
-#    build: .
-#    image: mazzolino/shepherd
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock
-#    environment:
-#      - TZ=${TZ}
-#      - SLEEP_TIME=2h
-#      - IGNORELIST_SERVICES=smarthomeserver_homeassistant
-#      - ROLLBACK_ON_FAILURE=true
-#      - IMAGE_AUTOCLEAN_LIMIT=5
-#      - REGISTRY_USER=twoscomplement
-#    secrets:
-#      - shepherd_registry_password
-#    deploy:
-#      placement:
-#        constraints:
-#        - node.role == manager
+  graphite_exporter:
+    image: prom/graphite-exporter
+    container_name: graphite_exporter
+    user: ${PUID}:${PGID}
+    command:
+      - "--graphite.mapping-config=/config/graphite_mapping.conf"
+    volumes:
+      - ${DATADIR}/graphite-exporter/config:/config
+    ports:
+      - "9108:9108"
+      - "2003:9109"
+      - "2003:9109/udp"
 
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    command: serve
+    volumes:
+      - ${DATADIR}/diun:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ}
+      - LOG_LEVEL=info
+      - LOG_JSON=false
+      - DIUN_WATCH_WORKERS=20
+      - DIUN_WATCH_SCHEDULE=0 */6 * * *
+      - DIUN_PROVIDERS_SWARM=true
+      - DIUN_PROVIDERS_SWARM_WATCHBYDEFAULT=true
+      - DIUN_NOTIF_DISCORD_WEBHOOKURL=https://discord.com/api/webhooks/1024413704533573672/FlIyeJx1EI2kPjquJhAGZtqdzgp534WSrpeCb34TDm4Y71Cxzw0MaanlHYrJRzx4WZeN
+    labels:
+      - "diun.enable=true"
+    restart: always
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
