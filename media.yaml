@@ -6,6 +6,12 @@ x-env: &env
     - PGID=${PGID}
     - TZ=${TZ}
 
+x-deploy: &deploy
+  deploy:
+    placement:
+      constraints:
+        - node.hostname == nuc8-1
+
 networks:
   default:
     name: smarthomeserver
@@ -22,7 +28,7 @@ volumes:
 services:
   overseerr:
     <<: *env
-    image: lscr.io/linuxserver/overseerr:latest
+    image: linuxserver/overseerr:latest
     container_name: overseerr
     volumes:
       - ${DATADIR}/overseerr/config:/config
@@ -42,7 +48,7 @@ services:
 
   nzbget:
     <<: *env
-    image: lscr.io/linuxserver/nzbget:latest
+    image: linuxserver/nzbget:latest
     container_name: nzbget
     volumes:
       - ${DATADIR}/nzbget/config:/config
@@ -52,7 +58,7 @@ services:
     restart: unless-stopped
 
   transmission:
-    image: lscr.io/linuxserver/transmission:latest
+    image: linuxserver/transmission:latest
     container_name: transmission
     environment:
       - PUID=${PUID}
@@ -74,59 +80,64 @@ services:
 
   radarr:
     <<: *env
-    image: lscr.io/linuxserver/radarr:latest
+    image: linuxserver/radarr:latest
     container_name: radarr
     volumes:
-      - ${DATADIR}/radarr/config:/config
+      - ${SERVARRDIR}/radarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
+    <<: *deploy
 
   prowlarr:
     <<: *env
-    image: lscr.io/linuxserver/prowlarr:develop
+    image: linuxserver/prowlarr:develop
     container_name: prowlarr
     volumes:
-      - ${DATADIR}/prowlarr/config:/config
+      - ${SERVARRDIR}/prowlarr/config:/config
     restart: unless-stopped
+    <<: *deploy
 
   sonarr:
     <<: *env
-    image: lscr.io/linuxserver/sonarr:latest
+    image: linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
-      - ${DATADIR}/sonarr/config:/config
+      - ${SERVARRDIR}/sonarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
+    <<: *deploy
 
   readarr:
     <<: *env
-    image: lscr.io/linuxserver/readarr:develop
+    image: linuxserver/readarr:develop
     container_name: readarr
     volumes:
-      - ${DATADIR}/readarr/config:/config
+      - ${SERVARRDIR}/readarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
+    <<: *deploy
 
   mylar3:
     <<: *env
-    image: lscr.io/linuxserver/mylar3:latest
+    image: linuxserver/mylar3:latest
     container_name: mylar3
     volumes:
-      - ${DATADIR}/mylar3/config:/config
+      - ${SERVARRDIR}/mylar3/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
+    <<: *deploy
 
   calibre:
     <<: *env
-    image: lscr.io/linuxserver/calibre:latest
+    image: linuxserver/calibre:latest
     container_name: calibre
     volumes:
       - ${DATADIR}/calibre/config:/config
@@ -149,7 +160,7 @@ services:
 
   tautulli:
     <<: *env
-    image: lscr.io/linuxserver/tautulli:latest
+    image: linuxserver/tautulli:latest
     container_name: tautulli
     volumes:
       - ${DATADIR}/tautulli/config:/config
