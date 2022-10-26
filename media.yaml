@@ -83,57 +83,52 @@ services:
     image: linuxserver/radarr:latest
     container_name: radarr
     volumes:
-      - ${SERVARRDIR}/radarr/config:/config
+      - ${DATADIR}/radarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
-    <<: *deploy
 
   prowlarr:
     <<: *env
     image: linuxserver/prowlarr:develop
     container_name: prowlarr
     volumes:
-      - ${SERVARRDIR}/prowlarr/config:/config
+      - ${DATADIR}/prowlarr/config:/config
     restart: unless-stopped
-    <<: *deploy
 
   sonarr:
     <<: *env
     image: linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
-      - ${SERVARRDIR}/sonarr/config:/config
+      - ${DATADIR}/sonarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
-    <<: *deploy
 
   readarr:
     <<: *env
     image: linuxserver/readarr:develop
     container_name: readarr
     volumes:
-      - ${SERVARRDIR}/readarr/config:/config
+      - ${DATADIR}/readarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
-    <<: *deploy
 
   mylar3:
     <<: *env
     image: linuxserver/mylar3:latest
     container_name: mylar3
     volumes:
-      - ${SERVARRDIR}/mylar3/config:/config
+      - ${DATADIR}/mylar3/config:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
-    <<: *deploy
 
   calibre:
     <<: *env
