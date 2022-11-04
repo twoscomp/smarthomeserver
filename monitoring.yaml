@@ -121,7 +121,7 @@ services:
       - LOG_LEVEL=info
       - LOG_JSON=false
       - DIUN_WATCH_WORKERS=20
-      - DIUN_WATCH_SCHEDULE=0 */6 * * *
+      - DIUN_WATCH_SCHEDULE=0 10 * * *
       - DIUN_PROVIDERS_SWARM=true
       - DIUN_PROVIDERS_SWARM_WATCHBYDEFAULT=true
       - DIUN_NOTIF_DISCORD_WEBHOOKURL=https://discord.com/api/webhooks/1024413704533573672/FlIyeJx1EI2kPjquJhAGZtqdzgp534WSrpeCb34TDm4Y71Cxzw0MaanlHYrJRzx4WZeN
