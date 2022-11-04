@@ -10,7 +10,7 @@ x-deploy: &deploy
   deploy:
     placement:
       constraints:
-        - node.hostname == nuc8-1
+        - node.hostname == truenas-ubuntu
 
 networks:
   default:
@@ -46,18 +46,20 @@ services:
     user: "${PUID}:${PGID}"
     restart: unless-stopped
 
-  nzbget:
+  sabnzbd:
     <<: *env
-    image: linuxserver/nzbget:latest
-    container_name: nzbget
+    <<: *deploy
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
     volumes:
-      - ${DATADIR}/nzbget/config:/config
+      - ${DATADIR}/sabnzbd:/config
       - type: volume
         source: truenas-media
         target: /data
     restart: unless-stopped
 
   transmission:
+    <<: *deploy
     image: linuxserver/transmission:latest
     container_name: transmission
     environment:
