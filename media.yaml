@@ -12,6 +12,12 @@ x-deploy: &deploy
       constraints:
         - node.hostname == truenas-ubuntu
 
+x-deploy-nuc: &deploy-nuc
+  deploy:
+    placement:
+      constraints:
+        - node.hostname == nuc8-1
+          
 networks:
   default:
     name: smarthomeserver
@@ -82,10 +88,11 @@ services:
 
   radarr:
     <<: *env
+    <<: *deploy-nuc
     image: linuxserver/radarr:latest
     container_name: radarr
     volumes:
-      - ${DATADIR}/radarr/config:/config
+      - ${SERVARRDIR}/radarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -93,18 +100,20 @@ services:
 
   prowlarr:
     <<: *env
+    <<: *deploy-nuc
     image: linuxserver/prowlarr:develop
     container_name: prowlarr
     volumes:
-      - ${DATADIR}/prowlarr/config:/config
+      - ${SERVARRDIR}/prowlarr/config:/config
     restart: unless-stopped
 
   sonarr:
     <<: *env
+    <<: *deploy-nuc
     image: linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
-      - ${DATADIR}/sonarr/config:/config
+      - ${SERVARRDIR}/sonarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -112,10 +121,11 @@ services:
 
   readarr:
     <<: *env
+    <<: *deploy-nuc
     image: linuxserver/readarr:develop
     container_name: readarr
     volumes:
-      - ${DATADIR}/readarr/config:/config
+      - ${SERVARRDIR}/readarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -123,10 +133,11 @@ services:
 
   mylar3:
     <<: *env
+    <<: *deploy-nuc
     image: linuxserver/mylar3:latest
     container_name: mylar3
     volumes:
-      - ${DATADIR}/mylar3/config:/config
+      - ${SERVARRDIR}/mylar3/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -165,11 +176,35 @@ services:
 
   bazarr:
     <<: *env
+    <<: *deploy-nuc
     image: linuxserver/bazarr:latest
     container_name: bazarr
     volumes:
-      - ${DATADIR}/bazarr/config:/config
+      - ${SERVARRDIR}/bazarr/config:/config
       - type: volume
         source: truenas-media
         target: /data
+    restart: unless-stopped
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr
+    container_name: recyclarr
+    init: true
+    user: ${PUID}:${PGID}
+    volumes:
+      - ${DATADIR}/recyclarr/config:/config
+    environment:
+      - TZ=America/Chicago
+      - CRON_SCHEDULE=@daily
+      - RECYCLARR_CREATE_CONFIG=true
+
+  flaresolverr:
+    <<: *deploy
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=America/Chicago
     restart: unless-stopped
