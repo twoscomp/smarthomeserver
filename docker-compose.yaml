@@ -9,6 +9,7 @@ x-env: &env
 networks:
   default:
     name: smarthomeserver
+    attachable: true
   adguard-mvl-1:
     external: true
   adguard-mvl-2:
@@ -94,6 +95,8 @@ services:
       - ${DATADIR}/duplicati/config:/config
       - ${DATADIR}:/source
       - ${SERVARRDIR}:/servarrData
+    ports:
+      - "8200:8200"
     deploy:
       placement:
         constraints:
