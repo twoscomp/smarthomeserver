@@ -1,0 +1,74 @@
+version: "3.9"
+
+networks:
+  default:
+    name: smarthomeserver
+    external: true
+
+services:
+  teslamate:
+    image: teslamate/teslamate:latest
+    restart: always
+    environment:
+      - ENCRYPTION_KEY=REDACTED_ENCRYPTION_KEY 
+      - DATABASE_USER=teslamate
+      - DATABASE_PASS=REDACTED_DB_PASSWORD
+      - DATABASE_NAME=teslamate
+      - DATABASE_HOST=teslamate_database
+      - MQTT_HOST=teslamate_mosquitto
+      - TZ=${TZ}
+      - PUID:${PUID}
+      - PGID:${PGID}
+#    ports:
+#      - 4000:4000
+    volumes:
+      - ${DATADIR}/teslamate/import:/opt/app/import
+    cap_drop:
+      - all
+
+  database:
+    image: postgres:14
+    restart: always
+    environment:
+      - POSTGRES_USER=teslamate
+      - POSTGRES_PASSWORD=REDACTED_DB_PASSWORD
+      - POSTGRES_DB=teslamate
+      - TZ=${TZ}
+      - PUID:${PUID}
+      - PGID:${PGID}
+#    ports:
+#      - 5432:5432
+    volumes:
+      - ${DATADIR}/teslamate/db:/var/lib/postgresql/data
+
+  grafana:
+    image: teslamate/grafana:latest
+    restart: always
+    user: ${PUID}:${PGID}
+    environment:
+      - DATABASE_USER=teslamate
+      - DATABASE_PASS=REDACTED_DB_PASSWORD
+      - DATABASE_NAME=teslamate
+      - DATABASE_HOST=teslamate_database
+      - TZ=${TZ}
+      - PUID:${PUID}
+      - PGID:${PGID}
+#    ports:
+#      - 3000:3000
+    volumes:
+      - ${DATADIR}/teslamate/grafana:/var/lib/grafana
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: always
+    command: mosquitto -c /mosquitto-no-auth.conf
+#    ports:
+#      - 1883:1883
+    environment:
+      - TZ=${TZ}
+      - PUID:${PUID}
+      - PGID:${PGID}
+    volumes:
+      - ${DATADIR}/teslamate/mosquitto/conf:/mosquitto/config
+      - ${DATADIR}/teslamate/mosquitto/data:/mosquitto/data
+
