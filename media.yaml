@@ -58,18 +58,6 @@ services:
     user: "${PUID}:${PGID}"
     restart: unless-stopped
 
-  sabnzbd:
-    <<: *env
-    <<: *deploy
-    image: lscr.io/linuxserver/sabnzbd:latest
-    container_name: sabnzbd
-    volumes:
-      - ${DATADIR}/sabnzbd:/config
-      - type: volume
-        source: truenas-media
-        target: /data
-    restart: unless-stopped
-
   radarr:
     <<: *env
     <<: *deploy-nuc
