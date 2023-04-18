@@ -30,6 +30,12 @@ volumes:
       type: nfs4
       o: "addr=192.168.0.196"
       device: :/mnt/newton/media
+  truenas-torrents:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: "addr=192.168.0.196"
+      device: :/mnt/newton/media/qbit/torrents
 
 services:
   overseerr:
@@ -59,28 +65,6 @@ services:
     container_name: sabnzbd
     volumes:
       - ${DATADIR}/sabnzbd:/config
-      - type: volume
-        source: truenas-media
-        target: /data
-    restart: unless-stopped
-
-  transmission:
-    <<: *deploy
-    image: linuxserver/transmission:latest
-    container_name: transmission
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - TRANSMISSION_WEB_HOME=/flood-for-transmission/ #optional
-      - USER=admin #optional
-      - PASS=ZXzpmZ!QTt*A6YRk #optional
-    ports:
-      - 51413:51413/tcp
-      - 51413:51413/udp
-    volumes:
-      - ${DATADIR}/flood-for-transmission:/flood-for-transmission
-      - ${DATADIR}/transmission/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -195,7 +179,7 @@ services:
       - ${DATADIR}/recyclarr/config:/config
     environment:
       - TZ=America/Chicago
-      - CRON_SCHEDULE=@daily
+      - CRON_SCHEDULE=@hourly
       - RECYCLARR_CREATE_CONFIG=true
 
   flaresolverr:
@@ -207,4 +191,17 @@ services:
       - LOG_HTML=${LOG_HTML:-false}
       - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
       - TZ=America/Chicago
+    restart: unless-stopped
+
+  cross-seed:
+    image: crossseed/cross-seed
+    container_name: cross-seed
+    user: ${PUID}:${PGID}
+    volumes:
+        - ${DATADIR}/cross-seed/config:/config
+        - type: volume
+          source: truenas-torrents
+          target: /torrents
+        - ${DATADIR}/cross-seed/cross-seeds:/cross-seeds
+    command: daemon # this enables the daemon
     restart: unless-stopped
