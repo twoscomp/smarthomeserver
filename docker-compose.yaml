@@ -103,10 +103,11 @@ services:
           - node.hostname == nuc8-1
 
   nginx-proxy-manager:
-    <<: *env
-    image: 'jc21/nginx-proxy-manager:latest'
+    image: 'jc21/nginx-proxy-manager:2.9.19'
     container_name: nginx-proxy-manager
     restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
     ports:
       - '80:80'
       - '81:81'
