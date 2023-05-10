@@ -2,8 +2,8 @@ version: "3.9"
 
 x-env: &env
   environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
+    - PUID=568
+    - PGID=1001
     - TZ=${TZ}
 
 x-deploy: &deploy
@@ -55,7 +55,7 @@ services:
       - type: volume
         source: truenas-media
         target: /data
-    user: "${PUID}:${PGID}"
+    user: "568:1001"
     restart: unless-stopped
 
   radarr:
@@ -130,7 +130,7 @@ services:
     <<: *env
     image: golift/unpackerr
     container_name: unpackerr
-    user: ${PUID}:${PGID}
+    user: 568:${PGID}
     volumes:
       - ${DATADIR}/unpackerr/config:/etc/unpackerr/
       - type: volume
@@ -162,13 +162,14 @@ services:
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr
     init: true
-    user: ${PUID}:${PGID}
+    user: 568:1001
     volumes:
       - ${DATADIR}/recyclarr/config:/config
     environment:
       - TZ=America/Chicago
       - CRON_SCHEDULE=@hourly
       - RECYCLARR_CREATE_CONFIG=true
+      - TINI_SUBREAPER=true
 
   flaresolverr:
     <<: *deploy
@@ -184,7 +185,7 @@ services:
   cross-seed:
     image: crossseed/cross-seed
     container_name: cross-seed
-    user: ${PUID}:${PGID}
+    user: 568:1001
     volumes:
         - ${DATADIR}/cross-seed/config:/config
         - type: volume
