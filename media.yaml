@@ -194,3 +194,13 @@ services:
         - ${DATADIR}/cross-seed/cross-seeds:/cross-seeds
     command: daemon # this enables the daemon
     restart: unless-stopped
+
+  epic-games:
+    image: charlocharlie/epicgames-freegames:latest
+    container_name: epic-games
+    volumes:
+      - ${DATADIR}/epic-games/config:/usr/app/config
+    deploy:
+      resources:
+        limits:
+          memory: 2g
