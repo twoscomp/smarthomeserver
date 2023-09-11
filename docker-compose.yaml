@@ -103,7 +103,7 @@ services:
           - node.hostname == nuc8-1
 
   nginx-proxy-manager:
-    image: 'jc21/nginx-proxy-manager:2.9.19'
+    image: 'jc21/nginx-proxy-manager:2.10.3'
     container_name: nginx-proxy-manager
     restart: unless-stopped
     environment:
@@ -120,7 +120,8 @@ services:
       interval: 10s
       timeout: 3s
     deploy:
-      mode: global
+      replicas: 3
+      # mode: global
 
   homeassistant:
     <<: *env
