@@ -103,7 +103,7 @@ services:
           - node.hostname == nuc8-1
 
   nginx-proxy-manager:
-    image: 'jc21/nginx-proxy-manager:2.10.3'
+    image: 'jc21/nginx-proxy-manager:2.10.4'
     container_name: nginx-proxy-manager
     restart: unless-stopped
     environment:
@@ -127,12 +127,9 @@ services:
     <<: *env
     container_name: homeassistant
     restart: unless-stopped
-    image: linuxserver/homeassistant:latest
+    image: ghcr.io/home-assistant/home-assistant:latest
     volumes:
       - ${DATADIR}/homeassistant/config:/config
-    labels:
-      # don't automatically update this container as it might break your setup
-      - "com.centurylinklabs.watchtower.enable=false"
 
   organizr:
     <<: *env
@@ -140,3 +137,16 @@ services:
     container_name: organizr
     volumes:
       - ${DATADIR}/organizr/config:/config
+
+  babybuddy:
+    image: lscr.io/linuxserver/babybuddy:latest
+    container_name: babybuddy
+    environment:
+      - PUID=${PUID_APPS}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - CSRF_TRUSTED_ORIGINS=http://babybuddy.swarm.localdomain,https://babybuddy.whatasave.space,http://homeassistant.swarm.localdomain,https://homeassistant.whatasave.space
+      - SECURE_PROXY_SSL_HEADER=True
+    volumes:
+      - ${DATADIR}/babybuddy/config:/config
+    restart: unless-stopped
