@@ -47,7 +47,7 @@ services:
     restart: unless-stopped
 
   komga:
-    image: index.docker.io/gotson/komga
+    image: gotson/komga:latest
     container_name: komga
     volumes:
       - ${DATADIR}/komga/config:/config
