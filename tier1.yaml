@@ -84,7 +84,7 @@ services:
       - adguard-mvl-3
 
   nginx-proxy-manager:
-    image: 'jc21/nginx-proxy-manager:2.10.4'
+    image: 'jc21/nginx-proxy-manager:2.11.1'
     container_name: nginx-proxy-manager
     restart: unless-stopped
     environment:

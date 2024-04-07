@@ -162,6 +162,7 @@ services:
     restart: unless-stopped
 
   recyclarr:
+    <<: *deploy-nuc
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr
     init: true
