@@ -15,10 +15,10 @@ services:
       - DATABASE_PASS=REDACTED_DB_PASSWORD
       - DATABASE_NAME=teslamate
       - DATABASE_HOST=teslamate_database
-      - MQTT_HOST=teslamate_mosquitto
+      - MQTT_HOST=192.168.0.196
       - TZ=${TZ}
       - PUID:${PUID}
-      - PGID:${PGID}
+      - PGID:${PGId}
 #    ports:
 #      - 4000:4000
     volumes:
