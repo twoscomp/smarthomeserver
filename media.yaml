@@ -210,7 +210,7 @@ services:
           memory: 2g
 
   plex-meta-manager:
-    image: meisnate12/plex-meta-manager
+    image: kometateam/kometa:latest
     container_name: plex-meta-manager
     user: 568:1001
     environment:
