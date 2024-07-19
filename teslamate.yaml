@@ -15,7 +15,7 @@ services:
       - DATABASE_PASS=REDACTED_DB_PASSWORD
       - DATABASE_NAME=teslamate
       - DATABASE_HOST=teslamate_database
-      - MQTT_HOST=192.168.0.196
+      - MQTT_HOST=teslamate_mosquitto
       - TZ=${TZ}
       - PUID:${PUID}
       - PGID:${PGId}
@@ -27,7 +27,7 @@ services:
       - all
 
   database:
-    image: postgres:14
+    image: postgres:16
     restart: always
     environment:
       - POSTGRES_USER=teslamate
@@ -62,8 +62,8 @@ services:
     image: eclipse-mosquitto:2
     restart: always
     command: mosquitto -c /mosquitto-no-auth.conf
-#    ports:
-#      - 1883:1883
+    ports:
+      - 1883:1883
     environment:
       - TZ=${TZ}
       - PUID:${PUID}
