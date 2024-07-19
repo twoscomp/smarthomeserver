@@ -12,7 +12,7 @@ networks:
 
 services:
   duplicati:
-    image: linuxserver/duplicati:latest
+    image: lscr.io/linuxserver/duplicati:latest
     container_name: duplicati
     restart: unless-stopped
     environment:
@@ -45,15 +45,37 @@ services:
     volumes:
       - ${DATADIR}/organizr/config:/config
 
-  #babybuddy:
-  #  image: lscr.io/linuxserver/babybuddy:latest
-  #  container_name: babybuddy
-  #  environment:
-  #    - puid=${puid_apps}
-  #    - pgid=${pgid}
-  #    - tz=${tz}
-  #    - csrf_trusted_origins=http://babybuddy.swarm.localdomain,https://babybuddy.whatasave.space,http://homeassistant.swarm.localdomain,https://homeassistant.whatasave.space
-  #    - secure_proxy_ssl_header=true
-  #  volumes:
-  #    - ${datadir}/babybuddy/config:/config
-  #  restart: unless-stopped
+  tesla-http-proxy:
+    image: "iainbullock/tesla_http_proxy:latest"
+
+    environment:
+      - TZ='America/Chicago'
+      - CLIENT_ID='client_id'
+      - CLIENT_SECRET='client_secret'
+      - DOMAIN='tesla.whatasave.space' # Public FQDN
+      - PROXY_HOST='nuc8-1.localdomain' # Local hostname (not IP) of this docker host
+      - REGION='North America' # Change to match your region
+
+    stdin_open: true
+    tty: true
+
+    entrypoint: "/app/run.sh"
+    working_dir: /app
+
+    volumes:
+      - type: bind
+        source: /mnt/dockerData/tesla-http-proxy/data
+        target: /data
+      # Webserver root for the $DOMAIN virtual server. Change the path according to your webserver setup. Path must exist or this container won't start
+      - type: bind
+        source: /mnt/dockerData/nginx-package-manager/data/tesla-proxy
+        target: /share/nginx
+      # Path to tesla_http_proxy directory inside /config on Home Assistant instance. Change according to your HA setup. Path must exist or this container won't start
+      - type: bind
+        source: /mnt/dockerData/tesla-http-proxy/homeassistant
+        target: /share/home-assistant
+
+    ports:
+      - 4430:443
+      - 8099:8099
+
