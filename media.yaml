@@ -234,3 +234,15 @@ services:
     volumes:
       - ${DATADIR}/plex-meta-manager/config:/config
     restart: unless-stopped
+
+  maintainerr:
+    environment:
+      - TZ=America/Chicago
+    image: ghcr.io/jorenn92/maintainerr:latest
+    container_name: maintainerr
+    user: 568:1001
+    volumes:
+      - ${DATADIR}/maintainerr:/opt/data
+    # ports:
+    #   - 6246:6246
+    restart: unless-stopped
