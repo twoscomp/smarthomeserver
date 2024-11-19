@@ -11,32 +11,32 @@ networks:
     attachable: true
 
 services:
-  duplicati:
-    image: lscr.io/linuxserver/duplicati:latest
-    container_name: duplicati
-    restart: unless-stopped
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=${TZ}
-    volumes:
-      - ${DATADIR}/duplicati/config:/config
-      - ${DATADIR}:/source
-      - ${SERVARRDIR}:/servarrData
-    ports:
-      - "8200:8200"
-    deploy:
-      placement:
-        constraints:
-          - node.hostname == nuc8-1
+  # duplicati:
+  #   image: lscr.io/linuxserver/duplicati:latest
+  #   container_name: duplicati
+  #   restart: unless-stopped
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - ${DATADIR}/duplicati/config:/config
+  #     - ${DATADIR}:/source
+  #     - ${SERVARRDIR}:/servarrData
+  #   ports:
+  #     - "8200:8200"
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.hostname == nuc8-1
 
-  homeassistant:
-    <<: *env
-    container_name: homeassistant
-    restart: unless-stopped
-    image: ghcr.io/home-assistant/home-assistant:latest
-    volumes:
-      - ${DATADIR}/homeassistant/config:/config
+  # homeassistant:
+  #   <<: *env
+  #   container_name: homeassistant
+  #   restart: unless-stopped
+  #   image: ghcr.io/home-assistant/home-assistant:latest
+  #   volumes:
+  #     - ${DATADIR}/homeassistant/config:/config
 
   organizr:
     <<: *env

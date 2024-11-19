@@ -6,12 +6,6 @@ x-env: &env
     - PGID=1001
     - TZ=${TZ}
 
-x-deploy: &deploy
-  deploy:
-    placement:
-      constraints:
-        - node.hostname == truenas-ubuntu
-
 x-deploy-nuc: &deploy-nuc
   deploy:
     placement:
@@ -40,17 +34,19 @@ volumes:
 services:
   overseerr:
     <<: *env
+    <<: *deploy-nuc
     image: lscr.io/linuxserver/overseerr:latest
     container_name: overseerr
     volumes:
-      - ${DATADIR}/overseerr/config:/config
+      - ${SERVARRDIR}/overseerr/config:/config
     restart: unless-stopped
 
   komga:
+    <<: *deploy-nuc
     image: gotson/komga:latest
     container_name: komga
     volumes:
-      - ${DATADIR}/komga/config:/config
+      - ${SERVARRDIR}/komga/config:/config
       - /etc/timezone:/etc/timezone
       - type: volume
         source: truenas-media
@@ -119,38 +115,11 @@ services:
 
   calibre:
     <<: *env
+    <<: *deploy-nuc
     image: lscr.io/linuxserver/calibre:latest
     container_name: calibre
     volumes:
-      - ${DATADIR}/calibre/config:/config
-      - type: volume
-        source: truenas-media
-        target: /data
-    restart: unless-stopped
-
-  unpackerr:
-    <<: *env
-    image: golift/unpackerr
-    container_name: unpackerr
-    user: 568:${PGID}
-    volumes:
-      - ${DATADIR}/unpackerr/config:/etc/unpackerr/
-      - type: volume
-        source: truenas-media
-        target: /data
-    restart: unless-stopped
-
-  unpackerr-ex:
-    environment:
-      - PUID=568
-      - PGID=1001
-      - TZ=${TZ}
-      - UN_FOLDER_0_PATH=/data/torrent/exoz
-      - UN_FOLDER_0_EXTRACT_PATH=/data/tmp
-    image: golift/unpackerr
-    container_name: unpackerr
-    user: 568:${PGID}
-    volumes:
+      - ${SERVARRDIR}/calibre/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -191,17 +160,6 @@ services:
       - RECYCLARR_CREATE_CONFIG=true
       - TINI_SUBREAPER=true
 
-  flaresolverr:
-    <<: *deploy
-    image: flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - LOG_HTML=${LOG_HTML:-false}
-      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-      - TZ=America/Chicago
-    restart: unless-stopped
-
   cross-seed:
     image: crossseed/cross-seed
     container_name: cross-seed
@@ -226,7 +184,7 @@ services:
           memory: 2g
 
   plex-meta-manager:
-    image: kometateam/kometa:latest
+    image: kometateam/kometa:develop
     container_name: plex-meta-manager
     user: 568:1001
     environment:

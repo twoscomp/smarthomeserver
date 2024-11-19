@@ -1,5 +1,11 @@
 version: "3.9"
 
+x-deploy: &deploy
+  deploy:
+    placement:
+      constraints:
+        - node.hostname == nuc8-2
+
 networks:
   default:
     name: smarthomeserver
@@ -7,6 +13,7 @@ networks:
 
 services:
   teslamate:
+    <<: *deploy
     image: teslamate/teslamate:latest
     restart: always
     environment:
@@ -22,11 +29,12 @@ services:
 #    ports:
 #      - 4000:4000
     volumes:
-      - ${DATADIR}/teslamate/import:/opt/app/import
+      - /docker-binds/teslamate/import:/opt/app/import
     cap_drop:
       - all
 
   database:
+    <<: *deploy
     image: postgres:16
     restart: always
     environment:
@@ -39,9 +47,10 @@ services:
 #    ports:
 #      - 5432:5432
     volumes:
-      - ${DATADIR}/teslamate/db:/var/lib/postgresql/data
+      - /docker-binds/teslamate/db:/var/lib/postgresql/data
 
   grafana:
+    <<: *deploy
     image: teslamate/grafana:latest
     restart: always
     user: ${PUID}:${PGID}
@@ -56,9 +65,10 @@ services:
 #    ports:
 #      - 3000:3000
     volumes:
-      - ${DATADIR}/teslamate/grafana:/var/lib/grafana
+      - /docker-binds/teslamate/grafana:/var/lib/grafana
 
   mosquitto:
+    <<: *deploy
     image: eclipse-mosquitto:2
     restart: always
     command: mosquitto -c /mosquitto-no-auth.conf
@@ -69,6 +79,6 @@ services:
       - PUID:${PUID}
       - PGID:${PGID}
     volumes:
-      - ${DATADIR}/teslamate/mosquitto/conf:/mosquitto/config
-      - ${DATADIR}/teslamate/mosquitto/data:/mosquitto/data
+      - /docker-binds/teslamate/mosquitto/conf:/mosquitto/config
+      - /docker-binds/teslamate/mosquitto/data:/mosquitto/data
 
