@@ -24,12 +24,6 @@ volumes:
       type: nfs4
       o: "addr=192.168.0.196"
       device: :/mnt/newton/media
-  truenas-torrents:
-    driver: local
-    driver_opts:
-      type: nfs4
-      o: "addr=192.168.0.196"
-      device: :/mnt/newton/media/qbit/torrents
 
 services:
   overseerr:
@@ -90,7 +84,7 @@ services:
   readarr:
     <<: *env
     <<: *deploy-nuc
-    image: lscr.io/linuxserver/readarr:develop
+    image: ghcr.io/hotio/readarr
     container_name: readarr
     volumes:
       - ${SERVARRDIR}/readarr/config:/config
@@ -161,15 +155,14 @@ services:
       - TINI_SUBREAPER=true
 
   cross-seed:
-    image: crossseed/cross-seed
+    image: ghcr.io/cross-seed/cross-seed:6
     container_name: cross-seed
     user: 568:1001
     volumes:
         - ${DATADIR}/cross-seed/config:/config
         - type: volume
-          source: truenas-torrents
-          target: /torrents
-        - ${DATADIR}/cross-seed/cross-seeds:/cross-seeds
+          source: truenas-media
+          target: /downloads
     command: daemon # this enables the daemon
     restart: unless-stopped
 
