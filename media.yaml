@@ -177,7 +177,7 @@ services:
           memory: 2g
 
   plex-meta-manager:
-    image: kometateam/kometa:develop
+    image: kometateam/kometa:nightly
     container_name: plex-meta-manager
     user: 568:1001
     environment:
