@@ -93,6 +93,18 @@ services:
         target: /data
     restart: unless-stopped
 
+  lidarr:
+    <<: *env
+    <<: *deploy-nuc
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    volumes:
+      - ${SERVARRDIR}/lidarr/config:/config
+      - type: volume
+        source: truenas-media
+        target: /data
+    restart: unless-stopped
+
   mylar3:
     <<: *env
     <<: *deploy-nuc
@@ -102,18 +114,6 @@ services:
       - 8090:8090
     volumes:
       - ${SERVARRDIR}/mylar3/config:/config
-      - type: volume
-        source: truenas-media
-        target: /data
-    restart: unless-stopped
-
-  calibre:
-    <<: *env
-    <<: *deploy-nuc
-    image: lscr.io/linuxserver/calibre:latest
-    container_name: calibre
-    volumes:
-      - ${SERVARRDIR}/calibre/config:/config
       - type: volume
         source: truenas-media
         target: /data
@@ -189,7 +189,7 @@ services:
   maintainerr:
     environment:
       - TZ=America/Chicago
-    image: ghcr.io/jorenn92/maintainerr:latest
+    image: ghcr.io/maintainerr/maintainerr:latest
     container_name: maintainerr
     user: 568:1001
     volumes:
