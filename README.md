@@ -114,3 +114,56 @@ docker network create -d macvlan \
 | `/servarrData` | Local (nuc8-1) | *arr app configurations |
 | `/docker-binds/teslamate` | Local (nuc8-2) | TeslaMate data |
 | NFS mount | TrueNAS | Media files |
+
+## Useful Commands
+
+### Deploy with Environment Variables
+Docker stack deploy doesn't read `.env` files. Use docker-compose v1 to process variables:
+```bash
+docker-compose -f media.yaml config | docker stack deploy -c - media
+```
+
+### Force Update Service Images
+Swarm pins image digests. Force pull fresh images when upstream updates:
+```bash
+docker service update --image lscr.io/linuxserver/sonarr:latest --force media_sonarr
+```
+
+### Debug Failing Services
+Check task history with full error messages:
+```bash
+docker service ps media_sonarr --no-trunc
+```
+
+Check service logs:
+```bash
+docker service logs media_sonarr --tail 50
+```
+
+### Test Internal Service Connectivity
+```bash
+docker run --rm --network smarthomeserver curlimages/curl:latest http://sonarr:8989/
+```
+
+### Inspect Service Configuration
+Check pinned image digest:
+```bash
+docker service inspect media_sonarr --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'
+```
+
+Check mount configuration:
+```bash
+docker service inspect media_sonarr --format '{{json .Spec.TaskTemplate.ContainerSpec.Mounts}}' | jq .
+```
+
+### Scale Services
+```bash
+docker service scale media_sonarr=0  # Stop
+docker service scale media_sonarr=1  # Start
+```
+
+### Remove Orphaned Services
+Services not in YAML but still running from previous deploys:
+```bash
+docker service rm media_calibre
+```
