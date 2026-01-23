@@ -1,90 +1,116 @@
 # smarthomeserver
-A simple setup for your own smart home server (on a Raspberry Pi)
 
-## Why you need your own smart home server
-The smart home market is really fragmented. Using different gateways and Apps from different ecosystems can be annoying, expansive and might not work very well together. Instead I suggest using a custom smart home server with some open source software that can replace all your hubs and give you access to one system to control it all.
+Docker Swarm stacks for homelab services running on Intel NUCs, integrated with TrueNAS for storage and media applications.
 
-## The hardware
-I am running this on a Raspberry Pi but as these are Docker containers you can run them on pretty much any platform.
+## Architecture
 
-## How to start
-Create a folder to hold all your docker data. Then clone this repository and update the .env file. Change the password and IDs and update the path to the folder you just created.
-
-Be sure to update the email related settings if you want to use notifications for automatic container updates. If you have done that uncomment the `WATCHTOWER_NOTIFICATIONS` related variables in the hosting.yml file.
-
-If you want to use Loki/Grafana to see all logs in one place you need to also copy the loki-configuration.yaml file to `${DATADIR}/loki/config/loki-config.yaml`. You need to also install the Loki logging driver or remove the logging commands from the compose files. The installation can be done via
 ```
-docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
-// or if you are running this on a Raspberry Pi
-docker plugin install grafana/loki-docker-driver:arm-v7 --alias loki --grant-all-permissions
-```
-Alternatively if you are going to use promtail to ingest the logs you need to also copy the promtail-config.yaml file to `${DATADIR}/promtail/config/promtail-config.yaml` and remove the `logging:` parts in the compose yaml files.
-
-If you want to use monitoring of your containers and host system via prometheus you should also create a config directory for that and copy the config file from this repository like
-```
-mkdir /some/data/dir/prometheus/etc
-cp prometheus_config.yaml /some/data/dir/prometheus/etc/prometheus.yml
+┌─────────────────────────────────────────────────────────────┐
+│                      TrueNAS Server                         │
+│  Plex, Download clients, Home Assistant, TrueNAS Apps       │
+│  NFS: /mnt/newton/media (192.168.0.196)                     │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ NFS
+┌──────────────────────────┴──────────────────────────────────┐
+│                    Docker Swarm Cluster                      │
+│  ┌───────────────────┐          ┌───────────────────┐       │
+│  │      nuc8-1       │          │      nuc8-2       │       │
+│  │  Media, Monitor,  │          │    TeslaMate      │       │
+│  │  Tesla HTTP Proxy │          │                   │       │
+│  └───────────────────┘          └───────────────────┘       │
+│  Shared: AdGuard Home (x2), Nginx Proxy Manager             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-Then you can start the containers via docker compose.
+## Stacks
+
+### tier1.yaml - Core Infrastructure
+| Service | Description |
+|---------|-------------|
+| AdGuard Home (x2) | DNS ad-blocking on macvlan networks (appear as physical devices) |
+| Nginx Proxy Manager | Reverse proxy and SSL certificate management |
+
+### media.yaml - Media Management
+| Service | Description |
+|---------|-------------|
+| Overseerr | Request management for Plex |
+| Radarr | Movie management |
+| Sonarr | TV show management |
+| Lidarr | Music management |
+| Readarr | Book management |
+| Mylar3 | Comic management |
+| Prowlarr | Indexer management |
+| Bazarr | Subtitle management |
+| Tautulli | Plex statistics |
+| Komga | Comic/manga server |
+| Recyclarr | TRaSH guides sync for Radarr/Sonarr |
+| cross-seed | Cross-seeding automation |
+| Kometa | Plex metadata management |
+| Maintainerr | Plex library maintenance |
+| Epic Games | Free games claimer |
+
+### monitoring.yaml - Observability
+| Service | Description |
+|---------|-------------|
+| Grafana | Dashboards and visualization |
+| Prometheus | Metrics collection |
+| Graphite Exporter | Graphite metrics ingestion |
+
+### teslamate.yaml - Tesla Vehicle Tracking
+| Service | Description |
+|---------|-------------|
+| TeslaMate | Tesla data logging |
+| PostgreSQL | TeslaMate database |
+| Grafana | TeslaMate dashboards |
+| Mosquitto | MQTT broker |
+
+### docker-compose.yaml - Tesla Integration
+| Service | Description |
+|---------|-------------|
+| Tesla HTTP Proxy | Tesla Fleet API proxy for Home Assistant |
+
+## Setup
+
+### Prerequisites
+- Docker Swarm initialized across nodes
+- TrueNAS NFS share accessible
+- macvlan networks created for AdGuard instances
+
+### Environment
+Copy `.env.orig` to `.env` and configure:
+```bash
+DATADIR=/mnt/dockerData      # Shared Docker data
+SERVARRDIR=/servarrData/     # Local *arr app configs
+TZ=America/Chicago
+PUID=1000
+PGID=1001
 ```
-docker-compose -f hosting.yml up -d
-docker-compose -f smarthome.yml up -d
-docker-compose -f monitoring.yml up -d
 
-// to see logs (some will only be available via Grafana, see below)
-docker-compose -f ...yml logs -f
-
-// to stop
-docker-compose -f ...yml down
+### Deploy Stacks
+```bash
+docker stack deploy -c tier1.yaml tier1
+docker stack deploy -c media.yaml media
+docker stack deploy -c monitoring.yaml monitoring
+docker stack deploy -c teslamate.yaml teslamate
+docker stack deploy -c docker-compose.yaml tesla
 ```
 
-## Which services are included?
+## Network Setup
 
-In the smarthome.yml:
+AdGuard Home instances run on macvlan networks, allowing them to have dedicated IPs on the LAN. Create the networks before deploying:
+```bash
+docker network create -d macvlan \
+  --subnet=192.168.0.0/24 \
+  --gateway=192.168.0.1 \
+  -o parent=eth0 \
+  adguard-mvl-1
+```
 
-| Service  | Port |  Setup |
-| ------------- | ------------- | ------------- |
-| Mosquitto  | 1883  | You need to copy the config file above. Can be accessed with a MQTT client like MQTT explorer |
-| InfluxDB  | only internally available from other containers  | - |
-| Grafana | 3000  | Setup can be done according to my [Grafana dashboard guide](https://thesmarthomejourney.com/2020/07/20/smart-home-dashboards-grafana/). You can use this to view logs according to [the Loki guide](https://thesmarthomejourney.com/2021/08/23/loki-grafana-log-aggregation/) |
-| TasmoAdmin  | 3080  | just let it scan your network for devices |
-| Zigbee2MQTT  | -  | Setup can be done according to my [Zigbee2MQTT guide](https://thesmarthomejourney.com/2020/05/11/guide-zigbee2mqtt/) |
-| Zigbee2MQTTAssistant  | 8880  | - |
-| HomeAssistant  | 8123  | Just go to the webpage and follow the setup wizard |
+## Data Paths
 
-This assumes that you have a Zigbee to USB stick connected to /dev/ttyACM0. Otherwise you need to update one line in the Zigbee2MQTT part. You will also need to provide a config file for mosquitto in the `${DATADIR}/mosquitto/config` folder. There is an example config here in the repo.
-
-In the hosting.yml:
-
-| Service  | Port |  Setup |
-| ------------- | ------------- | ------------- |
-| Heimdall  | 9080  | - |
-| PiHole  | 6080  | There is a nice in-depth guide [here](https://www.smarthomebeginner.com/pi-hole-setup-guide/) |
-| Adguard Home | 3300 | You can follow my setup guide [here](https://thesmarthomejourney.com/2021/05/24/adguard-pihole-dns-ad-blocker/)|
-| Unifi controller | 8080  | Just follow the setup wizard |
-| Watchtower | - | This is set up according to my [Watchtower guide](https://thesmarthomejourney.com/2021/03/01/watchtower-docker-auto-updates/) |
-| Loki | 3100 | This is set up according to my [Loki guide](https://thesmarthomejourney.com/2021/08/23/loki-grafana-log-aggregation/) |
-| Duplicati | 8200 | This allows you to back up any data from your Docker containers. More details [here](https://thesmarthomejourney.com/2022/04/04/home-assistant-docker-backup/) |
-
-In the monitoring.yml
-| Service  | Port |  Setup |
-| ------------- | ------------- | ------------- |
-| Prometheus  | 9090  | There is a full explanation [here](https://thesmarthomejourney.com/2022/07/25/monitoring-smarthome-prometheus/) |
-| node exporter  | 9100  | No frontend, see prometheus guide |
-| cadvisor | 8080 | No frontend, see prometheus guide|
-
-You should only use one adblocker (Adguard Home or PiHole) at a time as they use the same ports.
-
-## Logging
-If something is not working, check the logs first! Some service logs can only be viewed directly via `docker logs containername` or `docker-compose -f yamlname.yaml logs`. The important services are pushing their logs to Loki which collects all of them. You can use Grafana to view them all. I describe this in more detail [here](https://thesmarthomejourney.com/2021/08/23/loki-grafana-log-aggregation/). You need to install the Loki logging driver (see installation part above) for this to work or slightly change the compose files by removing the custom logging sections.
-Loki creates a json file for each services log that is kepts until a restart. Without any restrictions these files can get really big. To avoid this I added a size restriction to the configuration of each service via the `max-size` argument. More details about this can be found [here](https://thesmarthomejourney.com/2022/06/15/loki-log-size-limit/).
-
-## How does it look like? I need more details
-You can find more images and a details in my [blog post](https://thesmarthomejourney.com/2021/01/09/custom-smart-home-server-hub/)
-
-## Notes
-
-`docker stack deploy -c <(docker-compose config) stack-name-here`s
-
-Adguard runs on a macvlan network created and managed externally (CLI/Portainer). This enables the AdGuard container to look like a physical device on the network bount to 192.168.0.254. Additionally this enables proper client IPs to be shown in the webui while running in Docker Swarm.
+| Path | Location | Purpose |
+|------|----------|---------|
+| `/mnt/dockerData` | Shared | General container data |
+| `/servarrData` | Local (nuc8-1) | *arr app configurations |
+| `/docker-binds/teslamate` | Local (nuc8-2) | TeslaMate data |
+| NFS mount | TrueNAS | Media files |
