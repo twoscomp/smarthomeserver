@@ -1,12 +1,16 @@
 version: "3.9"
 
-x-env: &env
+x-deploy-nuc: &deploy-nuc
+  deploy:
+    placement:
+      constraints:
+        - node.hostname == nuc8-1
+
+x-lsio-nuc: &lsio-nuc
   environment:
     - PUID=568
     - PGID=1001
     - TZ=${TZ}
-
-x-deploy-nuc: &deploy-nuc
   deploy:
     placement:
       constraints:
@@ -27,12 +31,14 @@ volumes:
 
 services:
   overseerr:
-    <<: *env
     <<: *deploy-nuc
-    image: lscr.io/linuxserver/overseerr:latest
+    image: sctx/overseerr:latest
     container_name: overseerr
+    user: "568:1001"
+    environment:
+      - TZ=${TZ}
     volumes:
-      - ${SERVARRDIR}/overseerr/config:/config
+      - ${SERVARRDIR}/overseerr/config:/app/config
     restart: unless-stopped
 
   komga:
@@ -49,8 +55,7 @@ services:
     restart: unless-stopped
 
   radarr:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     volumes:
@@ -61,8 +66,7 @@ services:
     restart: unless-stopped
 
   prowlarr:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/prowlarr:develop
     container_name: prowlarr
     volumes:
@@ -70,8 +74,7 @@ services:
     restart: unless-stopped
 
   sonarr:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
@@ -82,8 +85,7 @@ services:
     restart: unless-stopped
 
   readarr:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: ghcr.io/hotio/readarr
     container_name: readarr
     volumes:
@@ -94,8 +96,7 @@ services:
     restart: unless-stopped
 
   lidarr:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/lidarr:latest
     container_name: lidarr
     volumes:
@@ -106,8 +107,7 @@ services:
     restart: unless-stopped
 
   mylar3:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/mylar3:latest
     container_name: mylar3
     ports:
@@ -120,8 +120,7 @@ services:
     restart: unless-stopped
 
   tautulli:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/tautulli:latest
     container_name: tautulli
     volumes:
@@ -129,8 +128,7 @@ services:
     restart: unless-stopped
 
   bazarr:
-    <<: *env
-    <<: *deploy-nuc
+    <<: *lsio-nuc
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
     volumes:
