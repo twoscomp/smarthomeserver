@@ -145,72 +145,37 @@ dlin ALL=(ALL) NOPASSWD: /usr/bin/rsync
 Moved sonarr, prowlarr, radarr to nuc8-2. Config dirs rsynced, media.yaml
 updated with `*lsio-nuc2` anchors, stack redeployed. All three healthy.
 
-## Phase 2 — IN PROGRESS
+## Phase 2 — CANCELLED
 
-After Phase 1, nuc8-1 still showed high load (~13) due to memory pressure
-(3.2GB used, 3.7GB swap). nuc8-2 was at load 0.77 with 1.8GB available.
-Moving additional services to free RAM on nuc8-1.
+Phase 2 was started but cancelled on 2025-02-11. The original high load on
+nuc8-1 was primarily caused by running Claude Code on the server, not the
+container workload itself.
 
-### Services to Move
+After stopping Claude, both nodes showed balanced resource usage:
+- nuc8-1: 2.0 GiB used, 1.8 GiB available
+- nuc8-2: 1.8 GiB used, 2.0 GiB available
 
-| Service        | RAM   | Storage    | Method                    |
-|----------------|-------|------------|---------------------------|
-| readarr        | 119MB | SERVARRDIR | rsync + re-pin (SQLite)   |
-| overseerr      | 139MB | SERVARRDIR | rsync + re-pin (SQLite)   |
-| grafana (mon.) | 102MB | DATADIR    | add nuc8-2 constraint only |
+### Rollback Actions Taken
 
-### Completed Steps
+- [x] Scaled media_readarr back to 1 (running on nuc8-1)
+- [x] Scaled media_overseerr back to 1 (running on nuc8-1)
+- [ ] Remove rsynced dirs from nuc8-2 (requires sudo):
+      `sudo rm -rf /servarrData/overseerr /servarrData/readarr`
 
-- [x] Scaled down media_readarr and media_overseerr
-- [x] Rsynced overseerr config to nuc8-2 (51/51 files)
-- [x] Rsynced readarr config to nuc8-2 (8745 files)
+## Final Distribution (after Phase 1 only)
 
-### Remaining Steps
+### nuc8-1 (11 tasks)
+- media: bazarr, komga, lidarr, mylar3, readarr, overseerr, recyclarr, tautulli
+- monitoring: prometheus, grafana
+- tier1: adguard1, nginx-proxy-manager (1 replica)
+- other: tesla-http-proxy
 
-1. **Update `media.yaml`:**
-   - Change readarr from `*lsio-nuc` to `*lsio-nuc2`
-   - Change overseerr from `*deploy-nuc` to `*deploy-nuc2`
-
-2. **Update `monitoring.yaml`:**
-   - Add nuc8-2 placement constraint to grafana:
-     ```yaml
-     deploy:
-       placement:
-         constraints:
-           - node.hostname == nuc8-2
-     ```
-
-3. **Redeploy both stacks** (must use docker-compose to template env vars):
-   ```bash
-   docker-compose -f media.yaml config | docker stack deploy -c - media
-   docker-compose -f monitoring.yaml config | docker stack deploy -c - monitoring
-   ```
-
-4. **Verify:**
-   - readarr, overseerr, grafana all healthy on nuc8-2
-   - No SQLite errors in readarr/overseerr logs
-   - nuc8-1 load and swap usage decrease
-
-5. **Cleanup:** Remove old config dirs from nuc8-1 once stable:
-   ```bash
-   sudo rm -rf /servarrData/overseerr /servarrData/readarr
-   ```
-
-6. **Update README.md** with final topology
-
-## Post-Rebalance Distribution (after Phase 2)
-
-### nuc8-1 (8 tasks)
-- media: bazarr, komga, lidarr, mylar3, recyclarr, tautulli
-- monitoring: prometheus
-- floating: nginx-proxy-manager (1 replica), tesla-http-proxy
-
-### nuc8-2 (19 tasks)
-- media: sonarr, prowlarr, radarr, readarr, overseerr, cross-seed,
-  epic-games, maintainerr, plex-meta-manager
+### nuc8-2 (12 tasks)
+- media: sonarr, prowlarr, radarr, cross-seed, epic-games, maintainerr,
+  plex-meta-manager
 - teslamate: database, grafana, mosquitto, teslamate
-- monitoring: grafana, graphite_exporter
-- floating: adguard1, adguard2, nginx-proxy-manager (1 replica)
+- monitoring: graphite_exporter
+- tier1: adguard2, nginx-proxy-manager (1 replica)
 
 ## Notes
 

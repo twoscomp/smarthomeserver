@@ -1,85 +1,15 @@
 version: "3.9"
 
-x-env: &env
-  environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
+# NOTE: AdGuard Home is now managed separately via adguard-standalone.yaml
+# with host networking for keepalived VIP failover support.
+# See keepalived/README.md for details.
 
 networks:
   default:
     name: smarthomeserver
     external: true
-  adguard-mvl-1:
-    external: true
-  adguard-mvl-2:
-    external: true
-  adguard-mvl-3:
-    external: true
-
-volumes:
-  adguard1:
-  adguard2:
-  adguard3:
 
 services:
-  adguard1:
-    <<: *env
-    image: adguard/adguardhome:latest
-    restart: unless-stopped
-    # ports:
-    #  - "53:53/tcp"
-    #  - "53:53/udp"
-    #  - "67:67/udp"
-    #  - "443:443/tcp"
-    #  - "853:853/tcp"
-    #  - "784:784/udp"
-    #  - "3300:3000/tcp"
-    #  - "3380:80/tcp"
-    volumes:
-      - "adguard1:/opt/adguardhome/work"
-      - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
-    networks:
-      - adguard-mvl-1
-
-  adguard2:
-    <<: *env
-    image: adguard/adguardhome:latest
-    restart: unless-stopped
-    # ports:
-    #  - "53:53/tcp"
-    #  - "53:53/udp"
-    #  - "67:67/udp"
-    #  - "443:443/tcp"
-    #  - "853:853/tcp"
-    #  - "784:784/udp"
-    #  - "3300:3000/tcp"
-    #  - "3380:80/tcp"
-    volumes:
-      - "adguard2:/opt/adguardhome/work"
-      - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
-    networks:
-      - adguard-mvl-2
-
-      #  adguard3:
-      #    <<: *env
-      #    image: adguard/adguardhome:latest
-      #    restart: unless-stopped
-      #    # ports:
-      #    #  - "53:53/tcp"
-      #    #  - "53:53/udp"
-      #    #  - "67:67/udp"
-      #    #  - "443:443/tcp"
-      #    #  - "853:853/tcp"
-      #    #  - "784:784/udp"
-      #    #  - "3300:3000/tcp"
-      #    #  - "3380:80/tcp"
-      #    volumes:
-      #      - "adguard3:/opt/adguardhome/work"
-      #      - "${DATADIR}/adguard/confdir:/opt/adguardhome/conf"
-      #    networks:
-      #      - adguard-mvl-3
-
   nginx-proxy-manager:
     image: 'jc21/nginx-proxy-manager:2.11.3'
     restart: unless-stopped
@@ -93,8 +23,6 @@ services:
     volumes:
       - ${DATADIR}/nginx-package-manager/data:/data
       - ${DATADIR}/nginx-package-manager/letsencrypt:/etc/letsencrypt
-      # see: https://github.com/NginxProxyManager/nginx-proxy-manager/issues/3154
-      # - ${DATADIR}/nginx-package-manager/opt/certbot:/opt/certbot
     healthcheck:
       test: ["CMD", "/bin/check-health"]
       interval: 10s
@@ -102,4 +30,3 @@ services:
       start_period: 600s
     deploy:
       replicas: 2
-      # mode: global

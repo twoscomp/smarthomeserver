@@ -1,0 +1,31 @@
+# Standalone AdGuard Home container with host networking
+# Run on each node: docker compose -f adguard-standalone.yaml up -d
+#
+# This runs outside of Docker Swarm because AdGuard needs true host networking
+# for keepalived VIP failover to work properly.
+#
+# Web UI is on port 3000 (port 80 is used by nginx-proxy-manager)
+# DNS is on port 53
+
+services:
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1001}
+      - TZ=${TZ:-America/Chicago}
+    volumes:
+      - adguard-work:/opt/adguardhome/work
+      - ${DATADIR:-/mnt/dockerData}/adguard/confdir:/opt/adguardhome/conf
+    healthcheck:
+      test: ["CMD", "nslookup", "google.com", "127.0.0.1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  adguard-work:
