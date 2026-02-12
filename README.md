@@ -14,9 +14,10 @@ Docker Swarm stacks for homelab services running on Intel NUCs, integrated with 
 ┌──────────────────────────┴──────────────────────────────────┐
 │                    Docker Swarm Cluster                      │
 │  ┌───────────────────┐          ┌───────────────────┐       │
-│  │      nuc8-1       │          │      nuc8-2       │       │
-│  │  Media, Monitor,  │          │    TeslaMate      │       │
-│  │  Tesla HTTP Proxy │          │                   │       │
+│  │   nuc8-1 (mgr)    │          │   nuc8-2 (wkr)    │       │
+│  │  Media (light),   │          │  Sonarr, Radarr,  │       │
+│  │  Monitoring       │          │  Prowlarr,        │       │
+│  │                   │          │  TeslaMate         │       │
 │  └───────────────────┘          └───────────────────┘       │
 │  Shared: AdGuard Home (x2), Nginx Proxy Manager             │
 └─────────────────────────────────────────────────────────────┘
@@ -111,7 +112,7 @@ docker network create -d macvlan \
 | Path | Location | Purpose |
 |------|----------|---------|
 | `/mnt/dockerData` | Shared | General container data |
-| `/servarrData` | Local (nuc8-1) | *arr app configurations |
+| `/servarrData` | Local (both nodes) | *arr app configurations (SQLite — must be local disk) |
 | `/docker-binds/teslamate` | Local (nuc8-2) | TeslaMate data |
 | NFS mount | TrueNAS | Media files |
 

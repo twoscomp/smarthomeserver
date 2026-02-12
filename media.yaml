@@ -16,6 +16,22 @@ x-lsio-nuc: &lsio-nuc
       constraints:
         - node.hostname == nuc8-1
 
+x-deploy-nuc2: &deploy-nuc2
+  deploy:
+    placement:
+      constraints:
+        - node.hostname == nuc8-2
+
+x-lsio-nuc2: &lsio-nuc2
+  environment:
+    - PUID=568
+    - PGID=1001
+    - TZ=${TZ}
+  deploy:
+    placement:
+      constraints:
+        - node.hostname == nuc8-2
+
 networks:
   default:
     name: smarthomeserver
@@ -55,7 +71,7 @@ services:
     restart: unless-stopped
 
   radarr:
-    <<: *lsio-nuc
+    <<: *lsio-nuc2
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     volumes:
@@ -66,7 +82,7 @@ services:
     restart: unless-stopped
 
   prowlarr:
-    <<: *lsio-nuc
+    <<: *lsio-nuc2
     image: lscr.io/linuxserver/prowlarr:develop
     container_name: prowlarr
     volumes:
@@ -74,7 +90,7 @@ services:
     restart: unless-stopped
 
   sonarr:
-    <<: *lsio-nuc
+    <<: *lsio-nuc2
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     volumes:
