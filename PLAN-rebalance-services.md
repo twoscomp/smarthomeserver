@@ -140,24 +140,84 @@ dlin ALL=(ALL) NOPASSWD: /usr/bin/rsync
    ssh nuc8-2 "sudo rm /etc/sudoers.d/claude-rebalance"
    ```
 
-## Post-Rebalance Distribution
+## Phase 1 — COMPLETED
 
-### nuc8-1 (11 tasks)
-- media: bazarr, komga, lidarr, mylar3, overseerr, readarr, recyclarr, tautulli
-- tier1: adguard1
+Moved sonarr, prowlarr, radarr to nuc8-2. Config dirs rsynced, media.yaml
+updated with `*lsio-nuc2` anchors, stack redeployed. All three healthy.
+
+## Phase 2 — IN PROGRESS
+
+After Phase 1, nuc8-1 still showed high load (~13) due to memory pressure
+(3.2GB used, 3.7GB swap). nuc8-2 was at load 0.77 with 1.8GB available.
+Moving additional services to free RAM on nuc8-1.
+
+### Services to Move
+
+| Service        | RAM   | Storage    | Method                    |
+|----------------|-------|------------|---------------------------|
+| readarr        | 119MB | SERVARRDIR | rsync + re-pin (SQLite)   |
+| overseerr      | 139MB | SERVARRDIR | rsync + re-pin (SQLite)   |
+| grafana (mon.) | 102MB | DATADIR    | add nuc8-2 constraint only |
+
+### Completed Steps
+
+- [x] Scaled down media_readarr and media_overseerr
+- [x] Rsynced overseerr config to nuc8-2 (51/51 files)
+- [x] Rsynced readarr config to nuc8-2 (8745 files)
+
+### Remaining Steps
+
+1. **Update `media.yaml`:**
+   - Change readarr from `*lsio-nuc` to `*lsio-nuc2`
+   - Change overseerr from `*deploy-nuc` to `*deploy-nuc2`
+
+2. **Update `monitoring.yaml`:**
+   - Add nuc8-2 placement constraint to grafana:
+     ```yaml
+     deploy:
+       placement:
+         constraints:
+           - node.hostname == nuc8-2
+     ```
+
+3. **Redeploy both stacks** (must use docker-compose to template env vars):
+   ```bash
+   docker-compose -f media.yaml config | docker stack deploy -c - media
+   docker-compose -f monitoring.yaml config | docker stack deploy -c - monitoring
+   ```
+
+4. **Verify:**
+   - readarr, overseerr, grafana all healthy on nuc8-2
+   - No SQLite errors in readarr/overseerr logs
+   - nuc8-1 load and swap usage decrease
+
+5. **Cleanup:** Remove old config dirs from nuc8-1 once stable:
+   ```bash
+   sudo rm -rf /servarrData/overseerr /servarrData/readarr
+   ```
+
+6. **Update README.md** with final topology
+
+## Post-Rebalance Distribution (after Phase 2)
+
+### nuc8-1 (8 tasks)
+- media: bazarr, komga, lidarr, mylar3, recyclarr, tautulli
 - monitoring: prometheus
+- floating: nginx-proxy-manager (1 replica), tesla-http-proxy
 
-### nuc8-2 (16 tasks)
-- media: sonarr, prowlarr, radarr, cross-seed, epic-games, maintainerr, plex-meta-manager
+### nuc8-2 (19 tasks)
+- media: sonarr, prowlarr, radarr, readarr, overseerr, cross-seed,
+  epic-games, maintainerr, plex-meta-manager
 - teslamate: database, grafana, mosquitto, teslamate
 - monitoring: grafana, graphite_exporter
-- tier1: adguard2, nginx-proxy-manager (x2)
-- smarthomeserver: tesla-http-proxy
+- floating: adguard1, adguard2, nginx-proxy-manager (1 replica)
 
 ## Notes
 
 - The NFS media volume (TrueNAS) is network-mounted and works from either node.
 - Only SQLite config dirs need local disk — this is why we rsync rather than
   use shared storage.
-- If nuc8-2 becomes overloaded in the future, lighter services (e.g., readarr,
-  lidarr) can be moved in the same manner.
+- Always deploy with `docker-compose -f <file>.yaml config | docker stack deploy -c - <stack>`
+  because `docker stack deploy` alone does not read `.env` files.
+- If nuc8-2 becomes overloaded in the future, lighter services (e.g., komga,
+  lidarr) can be moved back in the same manner.
