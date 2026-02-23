@@ -29,4 +29,7 @@ services:
       timeout: 3s
       start_period: 600s
     deploy:
-      replicas: 2
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager

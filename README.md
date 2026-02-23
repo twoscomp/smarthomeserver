@@ -16,8 +16,8 @@ Docker Swarm stacks for homelab services running on Intel NUCs, integrated with 
 │  ┌───────────────────┐          ┌───────────────────┐       │
 │  │   nuc8-1 (mgr)    │          │   nuc8-2 (wkr)    │       │
 │  │  Media (light),   │          │  Sonarr, Radarr,  │       │
-│  │  Monitoring       │          │  Prowlarr,        │       │
-│  │                   │          │  TeslaMate         │       │
+│  │  Security         │          │  Prowlarr,        │       │
+│  │                   │          │  TeslaMate        │       │
 │  └───────────────────┘          └───────────────────┘       │
 │  Shared: AdGuard Home (x2), Nginx Proxy Manager             │
 └─────────────────────────────────────────────────────────────┘
@@ -28,8 +28,18 @@ Docker Swarm stacks for homelab services running on Intel NUCs, integrated with 
 ### tier1.yaml - Core Infrastructure
 | Service | Description |
 |---------|-------------|
-| AdGuard Home (x2) | DNS ad-blocking on macvlan networks (appear as physical devices) |
-| Nginx Proxy Manager | Reverse proxy and SSL certificate management |
+| Nginx Proxy Manager | Reverse proxy and SSL certificate management (1 replica, pinned to nuc8-1) |
+
+### adguard-standalone.yaml - DNS (standalone, not Swarm)
+| Service | Description |
+|---------|-------------|
+| AdGuard Home (x2) | DNS ad-blocking with host networking; managed via keepalived VIP failover |
+
+### security.yaml - Security
+| Service | Description |
+|---------|-------------|
+| cloudflared | Cloudflare Tunnel — routes external traffic in without open WAN ports |
+| crowdsec | Lightweight IPS — parses NPM logs and bans malicious IPs via iptables bouncer |
 
 ### media.yaml - Media Management
 | Service | Description |
@@ -49,13 +59,6 @@ Docker Swarm stacks for homelab services running on Intel NUCs, integrated with 
 | Kometa | Plex metadata management |
 | Maintainerr | Plex library maintenance |
 | Epic Games | Free games claimer |
-
-### monitoring.yaml - Observability
-| Service | Description |
-|---------|-------------|
-| Grafana | Dashboards and visualization |
-| Prometheus | Metrics collection |
-| Graphite Exporter | Graphite metrics ingestion |
 
 ### teslamate.yaml - Tesla Vehicle Tracking
 | Service | Description |
@@ -88,23 +91,28 @@ PGID=1001
 ```
 
 ### Deploy Stacks
+All stack commands run on **nuc8-1** (Swarm manager) from `~/smarthomemanager/`. Use docker-compose to process `.env` variables before deploying:
 ```bash
-docker stack deploy -c tier1.yaml tier1
-docker stack deploy -c media.yaml media
-docker stack deploy -c monitoring.yaml monitoring
-docker stack deploy -c teslamate.yaml teslamate
-docker stack deploy -c docker-compose.yaml tesla
+docker-compose -f tier1.yaml config | docker stack deploy -c - tier1
+docker-compose -f media.yaml config | docker stack deploy -c - media
+docker-compose -f security.yaml config | docker stack deploy -c - security
+docker-compose -f teslamate.yaml config | docker stack deploy -c - teslamate
+docker-compose -f docker-compose.yaml config | docker stack deploy -c - tesla
+```
+
+AdGuard Home is managed separately (not a Swarm stack):
+```bash
+# On each node
+docker-compose -f adguard-standalone.yaml up -d
 ```
 
 ## Network Setup
 
-AdGuard Home instances run on macvlan networks, allowing them to have dedicated IPs on the LAN. Create the networks before deploying:
+AdGuard Home uses host networking with keepalived Virtual IP (VIP) failover. See `keepalived/README.md` for setup details.
+
+The main Docker Swarm overlay network `smarthomeserver` must be created before deploying stacks:
 ```bash
-docker network create -d macvlan \
-  --subnet=192.168.0.0/24 \
-  --gateway=192.168.0.1 \
-  -o parent=eth0 \
-  adguard-mvl-1
+docker network create --driver overlay --attachable smarthomeserver
 ```
 
 ## Data Paths

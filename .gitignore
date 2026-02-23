@@ -1,0 +1,7 @@
+# Credentials and secrets — never commit these
+.env
+*.secret
+secrets/
+
+# Keep .env.orig as a template (has REPLACE_ME placeholders)
+!.env.orig

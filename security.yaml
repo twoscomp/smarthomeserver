@@ -1,0 +1,74 @@
+version: "3.9"
+
+# Security stack
+# - cloudflared: Cloudflare Tunnel daemon — routes external HTTPS traffic in without
+#   any open WAN ports. All external hostnames point to tier1_nginx-proxy-manager:80.
+# - crowdsec: Lightweight collaborative IPS — parses NPM logs and shares threat intel
+#   with the CrowdSec community. Pairs with the iptables bouncer installed on each host.
+#
+# Prerequisites:
+#   docker secret create cloudflare_tunnel_token -   (paste tunnel token from stdin)
+#
+# Deploy:
+#   docker-compose -f security.yaml config | docker stack deploy -c - security
+#
+# Bootstrap CrowdSec after first deploy:
+#   docker exec $(docker ps -q -f name=security_crowdsec) cscli bouncers add iptables-bouncer
+#   docker exec $(docker ps -q -f name=security_crowdsec) cscli console enroll <enroll-key>
+#
+# Install iptables bouncer on each Swarm node (host-level, not Docker):
+#   sudo apt install crowdsec-firewall-bouncer-iptables
+#   # Set api_url in /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml to:
+#   # http://<nuc8-1-ip>:8080
+#
+# NPM real IP headers (add to Advanced tab of each proxy host in NPM UI):
+#   real_ip_header CF-Connecting-IP;
+#   real_ip_recursive on;
+
+networks:
+  default:
+    name: smarthomeserver
+    external: true
+
+secrets:
+  cloudflare_tunnel_token:
+    external: true
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN_FILE=/run/secrets/cloudflare_tunnel_token
+      - TZ=${TZ}
+    secrets:
+      - cloudflare_tunnel_token
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    environment:
+      - TZ=${TZ}
+      - COLLECTIONS=crowdsecurity/nginx crowdsecurity/linux
+      - CUSTOM_HOSTNAME=smarthomeserver-crowdsec
+    volumes:
+      - ${DATADIR}/crowdsec/data:/var/lib/crowdsec/data
+      - ${DATADIR}/crowdsec/config:/etc/crowdsec
+      # Read NPM access logs for threat detection
+      - ${DATADIR}/nginx-package-manager/data/logs:/var/log/npm:ro
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
