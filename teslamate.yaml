@@ -17,9 +17,9 @@ services:
     image: teslamate/teslamate:2.1.1
     restart: always
     environment:
-      - ENCRYPTION_KEY=REDACTED_ENCRYPTION_KEY 
+      - ENCRYPTION_KEY=${TESLAMATE_ENCRYPTION_KEY}
       - DATABASE_USER=teslamate
-      - DATABASE_PASS=REDACTED_DB_PASSWORD
+      - DATABASE_PASS=${TESLAMATE_DB_PASSWORD}
       - DATABASE_NAME=teslamate
       - DATABASE_HOST=teslamate_database
       - MQTT_HOST=teslamate_mosquitto
@@ -39,7 +39,7 @@ services:
     restart: always
     environment:
       - POSTGRES_USER=teslamate
-      - POSTGRES_PASSWORD=REDACTED_DB_PASSWORD
+      - POSTGRES_PASSWORD=${TESLAMATE_DB_PASSWORD}
       - POSTGRES_DB=teslamate
       - TZ=${TZ}
       - PUID:${PUID}
@@ -56,7 +56,7 @@ services:
     user: ${PUID}:${PGID}
     environment:
       - DATABASE_USER=teslamate
-      - DATABASE_PASS=REDACTED_DB_PASSWORD
+      - DATABASE_PASS=${TESLAMATE_DB_PASSWORD}
       - DATABASE_NAME=teslamate
       - DATABASE_HOST=teslamate_database
       - TZ=${TZ}
