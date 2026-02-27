@@ -1,6 +1,6 @@
-# smarthomeserver
+# homelab
 
-Docker Swarm stacks for homelab services running on Intel NUCs, integrated with TrueNAS for storage and media applications.
+Docker Swarm stacks for homelab services running on Intel NUCs, integrated with TrueNAS for storage and media applications. Includes Cloudflare Tunnel for external access without open WAN ports and CrowdSec IPS for intrusion prevention.
 
 ## Architecture
 
@@ -78,7 +78,7 @@ Docker Swarm stacks for homelab services running on Intel NUCs, integrated with 
 ### Prerequisites
 - Docker Swarm initialized across nodes
 - TrueNAS NFS share accessible
-- macvlan networks created for AdGuard instances
+- keepalived installed on both nodes (for AdGuard VIP failover)
 
 ### Environment
 Copy `.env.orig` to `.env` and configure:
@@ -88,10 +88,11 @@ SERVARRDIR=/servarrData/     # Local *arr app configs
 TZ=America/Chicago
 PUID=1000
 PGID=1001
+PUID_APPS=568                # UID for app-specific containers (e.g. linuxserver)
 ```
 
 ### Deploy Stacks
-All stack commands run on **nuc8-1** (Swarm manager) from `~/smarthomemanager/`. Use docker-compose to process `.env` variables before deploying:
+All stack commands run on **nuc8-1** (Swarm manager) from `~/homelab/`. Use docker-compose to process `.env` variables before deploying:
 ```bash
 docker-compose -f tier1.yaml config | docker stack deploy -c - tier1
 docker-compose -f media.yaml config | docker stack deploy -c - media
@@ -110,10 +111,42 @@ docker-compose -f adguard-standalone.yaml up -d
 
 AdGuard Home uses host networking with keepalived Virtual IP (VIP) failover. See `keepalived/README.md` for setup details.
 
-The main Docker Swarm overlay network `smarthomeserver` must be created before deploying stacks:
+The main Docker Swarm overlay network is named `smarthomeserver` (historical name, kept as-is to avoid disrupting live services — renaming would require redeploying all stacks). Create it before first deploy:
 ```bash
 docker network create --driver overlay --attachable smarthomeserver
 ```
+
+## Security Bootstrap
+
+CrowdSec (in `security.yaml`) uses an **iptables bouncer** that runs on the Docker host, outside the container. After deploying `security.yaml`, the bouncer must be set up manually on each node that should enforce bans:
+
+```bash
+# 1. Add CrowdSec packagecloud apt repo (see https://packagecloud.io/crowdsec/crowdsec)
+curl -s https://packagecloud.io/install/repositories/crowdsec/crowdsec/script.deb.sh | sudo bash
+
+# 2. Install the firewall bouncer
+sudo apt install crowdsec-firewall-bouncer-iptables
+
+# 3. Register the bouncer with the local CrowdSec LAPI
+#    (run from within the crowdsec container to get the API key)
+docker exec -it <crowdsec_container> cscli bouncers add firewall-bouncer
+
+# 4. Configure the bouncer
+#    Edit /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+#    Set api_url: http://localhost:8080  (CrowdSec LAPI port, published in security.yaml)
+#    Set api_key: <key from step 3>
+
+# 5. Start and enable
+sudo systemctl enable --now crowdsec-firewall-bouncer
+```
+
+See inline comments in `security.yaml` for additional context.
+
+## Secrets & Git Hygiene
+
+`.env` is **gitignored** — all credentials and secrets belong there only, referenced in stack yamls as `${VAR_NAME}`. Never commit `.env` or hardcode credentials in yaml files.
+
+Git history was sanitized with `git filter-repo` (Feb 2026) to remove previously committed secrets. If you need to add a new secret, add it to `.env` and reference it via the environment variable pattern already used throughout the stack files.
 
 ## Data Paths
 
