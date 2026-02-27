@@ -19,7 +19,7 @@ version: "3.9"
 # Install iptables bouncer on each Swarm node (host-level, not Docker):
 #   sudo apt install crowdsec-firewall-bouncer-iptables
 #   # Set api_url in /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml to:
-#   # http://<nuc8-1-ip>:8080
+#   # http://192.168.0.101:8080
 #
 # NPM real IP headers (add to Advanced tab of each proxy host in NPM UI):
 #   real_ip_header CF-Connecting-IP;
@@ -59,6 +59,12 @@ services:
       - TZ=${TZ}
       - COLLECTIONS=crowdsecurity/nginx crowdsecurity/linux
       - CUSTOM_HOSTNAME=smarthomeserver-crowdsec
+    ports:
+      # LAPI — mode:host bypasses routing mesh so the host-level iptables bouncer can reach it
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: host
     volumes:
       - ${DATADIR}/crowdsec/data:/var/lib/crowdsec/data
       - ${DATADIR}/crowdsec/config:/etc/crowdsec
