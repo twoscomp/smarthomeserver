@@ -140,6 +140,29 @@ docker exec -it <crowdsec_container> cscli bouncers add firewall-bouncer
 sudo systemctl enable --now crowdsec-firewall-bouncer
 ```
 
+### NPM Real IP Passthrough
+
+For CrowdSec to see real client IPs (not Cloudflare or internal IPs), nginx must be told to trust upstream proxies and read the `CF-Connecting-IP` header. This is configured **globally** via NPM's custom config mechanism — do **not** add real IP directives per proxy host in the NPM UI.
+
+The file `/mnt/dockerData/nginx-package-manager/data/nginx/custom/server_proxy.conf` is automatically included in every NPM proxy host server block. It must contain:
+
+```nginx
+# Trust the Docker overlay network (where cloudflared runs)
+set_real_ip_from 10.0.1.0/24;
+# Trust Cloudflare public IP ranges
+set_real_ip_from 103.21.244.0/22;
+# ... (all Cloudflare ranges)
+real_ip_header CF-Connecting-IP;
+real_ip_recursive on;
+```
+
+After editing this file, reload nginx inside the NPM container:
+```bash
+docker exec $(docker ps -q -f name=tier1_nginx) nginx -s reload
+```
+
+> **Note:** NPM's include pattern is `server_proxy[.]conf` (literal filename), so the file must be named exactly `server_proxy.conf`. Files with other names (e.g. `server_proxy_cf_realip.conf`) will not be included.
+
 See inline comments in `security.yaml` for additional context.
 
 ## Secrets & Git Hygiene

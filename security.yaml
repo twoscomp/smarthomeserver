@@ -21,9 +21,14 @@ version: "3.9"
 #   # Set api_url in /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml to:
 #   # http://192.168.0.101:8080
 #
-# NPM real IP headers (add to Advanced tab of each proxy host in NPM UI):
-#   real_ip_header CF-Connecting-IP;
-#   real_ip_recursive on;
+# NPM real IP passthrough (applied globally, NOT per proxy host):
+#   Traffic path: client → Cloudflare → cloudflared container (10.0.1.0/24) → NPM
+#   cloudflared adds CF-Connecting-IP header with the real client IP.
+#   NPM custom config at ${DATADIR}/nginx-package-manager/data/nginx/custom/server_proxy.conf
+#   trusts the overlay network (10.0.1.0/24) and all Cloudflare IP ranges, then reads
+#   real_ip_header CF-Connecting-IP so nginx substitutes the real client IP in logs.
+#   NPM includes this file in every proxy host server block via the server_proxy[.]conf pattern.
+#   Do NOT add real_ip directives in individual proxy host Advanced tabs — they will conflict.
 
 networks:
   default:
